@@ -7,5 +7,5 @@ export default defineConfig({
     target: 'es2020',
     chunkSizeWarningLimit: 2000,
   },
-  server: { port: 5173, strictPort: true },
+  server: { host: '127.0.0.1', port: 5173, strictPort: true },
 });

@@ -42,7 +42,7 @@ bg = ImageEnhance.Brightness(bg).enhance(0.62)
 save(bg, 'bg_fog.jpg', 68)
 
 # Эдит Вэйл (канон: реф. 7)
-ed = r7.crop((31, 987, 550, 1790)).resize((480, 743), Image.LANCZOS)
+ed = r7.crop((90, 987, 550, 1790)).resize((460, 803), Image.LANCZOS)
 save(ed, 'edith.jpg', 82)
 
 # Карта городка: реф. 6 без заголовка, бокового меню и нижней панели; надписи размыты
