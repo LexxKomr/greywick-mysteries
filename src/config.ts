@@ -36,4 +36,4 @@ export const hex = (n: number): string => '#' + n.toString(16).padStart(6, '0');
 export const FONT_HEAD = '"Playfair Display", "PT Serif", Georgia, serif';
 export const FONT_BODY = '"PT Serif", Georgia, serif';
 
-export const VERSION = '0.2';
+export const VERSION = '0.2.1';

@@ -27,14 +27,14 @@ export class ClueScene extends Phaser.Scene {
     const c = getCase(data.caseId);
     const clue = c.clues[data.index];
     const total = c.clues.length;
-    addBackground(this, 'table_library', 0.55);
+    addBackground(this, 'study_board', 0.6); // кабинет Эдит, где висит доска
 
     let y = 96;
     ribbon(this, W / 2, y, 760, 110, data.isNew ? t('clue.found') : t('clue.number', { n: data.index + 1, total }), 60);
     y += 90;
     const stars = data.isNew ? (data.stars ?? 1) : save.progress(c.id, total).stars[data.index];
     if (data.isNew) sfx.clue();
-    starsRow(this, W / 2, y + 60, stars, 44);
+    starsRow(this, W / 2, y + 60, stars, 56);
     y += 130;
 
     // улика на листе старой бумаги, приколотом латунной кнопкой (как на референсе 3)
@@ -84,11 +84,25 @@ export class ClueScene extends Phaser.Scene {
     const titleY = y + (data.isNew ? 122 : 92);
     const title = txt(this, W / 2, titleY, clue.title, 62, C.wine, { head: true });
     title.setScale(Math.min(1, (W - 200) / title.width));
+    // завитки по бокам названия, как на референсе
     const line = this.add.graphics();
-    line.lineStyle(3, C.brassDark, 0.7);
-    line.lineBetween(W / 2 - 220, titleY + 52, W / 2 + 220, titleY + 52);
-    const areaTop = titleY + 82;
-    const area = new ScrollArea(this, 90, areaTop, W - 180, bottom - areaTop - 50);
+    const half = Math.min(title.displayWidth / 2 + 24, W / 2 - 110);
+    line.lineStyle(3, C.brassDark, 0.8);
+    line.lineBetween(W / 2 - half - 70, titleY, W / 2 - half - 6, titleY);
+    line.lineBetween(W / 2 + half + 6, titleY, W / 2 + half + 70, titleY);
+    line.fillStyle(C.brassDark, 0.9);
+    for (const sx of [-1, 1]) {
+      const x = W / 2 + sx * (half + 80);
+      line.fillPoints([new Phaser.Math.Vector2(x - 9, titleY), new Phaser.Math.Vector2(x, titleY - 9), new Phaser.Math.Vector2(x + 9, titleY), new Phaser.Math.Vector2(x, titleY + 9)], true);
+    }
+    // текст — на отдельной, чуть темнее, бумажной плашке
+    const areaTop = titleY + 62;
+    const plate = this.add.graphics();
+    plate.fillStyle(C.paperDark, 0.55);
+    plate.fillRoundedRect(70, areaTop - 14, W - 140, bottom - areaTop - 30, 16);
+    plate.lineStyle(2, C.brassDark, 0.45);
+    plate.strokeRoundedRect(70, areaTop - 14, W - 140, bottom - areaTop - 30, 16);
+    const area = new ScrollArea(this, 100, areaTop + 6, W - 200, bottom - areaTop - 70);
     area.addParagraphs(clue.text, 46);
     area.addSpace(20);
 

@@ -23,7 +23,8 @@ def bbox_of(mask):
 
 # --- столы: 1080x1920 ---
 for src, name in (('table_01_library.jpg', 'table_library'), ('table_02_kitchen.jpeg', 'table_kitchen'),
-                  ('table_03_tearoom.jpeg', 'table_tearoom'), ('table_04_lighthouse.jpeg', 'table_lighthouse')):
+                  ('table_03_tearoom.jpeg', 'table_tearoom'), ('table_04_lighthouse.jpeg', 'table_lighthouse'),
+                  ('study_board.png', 'study_board')):
     im = Image.open(os.path.join(ART, src)).convert('RGB').resize((1080, 1920), Image.LANCZOS)
     save(im, name + '.webp', 78)
 
