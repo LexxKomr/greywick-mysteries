@@ -142,16 +142,24 @@ export function makeButton(scene: Scene, x: number, y: number, w: number, h: num
 /** Круглая кнопка со значком (значок рисует функция draw). */
 export function roundButton(scene: Scene, x: number, y: number, radius: number, draw: (g: G) => void, onClick: () => void, fill: number = C.wood): Phaser.GameObjects.Container {
   const g = scene.add.graphics();
-  g.fillStyle(0x000000, 0.4);
-  g.fillCircle(2, 8, radius);
-  g.fillStyle(C.brassDark, 1);
-  g.fillCircle(0, 0, radius);
-  g.fillStyle(C.brass, 1);
-  g.fillCircle(0, 0, radius - 2);
-  g.fillStyle(fill, 1);
-  g.fillCircle(0, 0, radius - 8);
+  const shadow = scene.add.graphics();
+  shadow.fillStyle(0x000000, 0.4);
+  shadow.fillCircle(2, 8, radius);
+  const parts: Phaser.GameObjects.GameObject[] = [shadow];
+  if (scene.textures.exists('button_round')) {
+    // кожаная кнопка с латунным ободком (картинка), значок рисует код
+    parts.push(scene.add.image(0, 0, 'button_round').setDisplaySize(radius * 2 + 6, radius * 2 + 6));
+  } else {
+    shadow.fillStyle(C.brassDark, 1);
+    shadow.fillCircle(0, 0, radius);
+    shadow.fillStyle(C.brass, 1);
+    shadow.fillCircle(0, 0, radius - 2);
+    shadow.fillStyle(fill, 1);
+    shadow.fillCircle(0, 0, radius - 8);
+  }
   draw(g);
-  const c = scene.add.container(x, y, [g]);
+  parts.push(g);
+  const c = scene.add.container(x, y, parts);
   c.setSize(radius * 2 + 16, radius * 2 + 16);
   c.setInteractive({ useHandCursor: true });
   let armed = false;

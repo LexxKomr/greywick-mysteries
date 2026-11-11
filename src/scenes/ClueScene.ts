@@ -50,10 +50,11 @@ export class ClueScene extends Phaser.Scene {
     g.fillCircle(W / 2, y + 4, 17);
     g.fillStyle(C.brassLight, 1);
     g.fillCircle(W / 2 - 3, y + 1, 9);
-    const icon = this.add.image(W / 2, y + cardH / 2 + 8, clue.image).setDisplaySize(240, 240);
+    const icon = this.add.image(W / 2, y + cardH / 2 + 8, clue.image).setDisplaySize(270, 270);
     if (data.isNew) {
+      const full = icon.scaleX;
       icon.setScale(0.1);
-      this.tweens.add({ targets: icon, scale: 240 / 400, duration: 450, ease: 'Back.easeOut', delay: 150 });
+      this.tweens.add({ targets: icon, scale: full, duration: 450, ease: 'Back.easeOut', delay: 150 });
     }
     y += cardH + 30;
 

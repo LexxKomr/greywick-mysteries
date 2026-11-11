@@ -67,13 +67,24 @@ export function drawSuit(ctx: CanvasRenderingContext2D, suit: number, cx: number
   ctx.fill();
 }
 
+let paperImg: CanvasImageSource | null = null;
+let backImg: CanvasImageSource | null = null;
+
 function paintFaceBase(ctx: CanvasRenderingContext2D): void {
-  const grad = ctx.createLinearGradient(0, 0, 0, TH);
-  grad.addColorStop(0, '#fdf6e4');
-  grad.addColorStop(1, '#eedfbd');
   roundRect(ctx, 1.5, 1.5, TW - 3, TH - 3, 16);
-  ctx.fillStyle = grad;
-  ctx.fill();
+  if (paperImg) {
+    ctx.save();
+    ctx.clip();
+    ctx.drawImage(paperImg, 0, 0, TW, TH);
+    ctx.restore();
+    roundRect(ctx, 1.5, 1.5, TW - 3, TH - 3, 16);
+  } else {
+    const grad = ctx.createLinearGradient(0, 0, 0, TH);
+    grad.addColorStop(0, '#fdf6e4');
+    grad.addColorStop(1, '#eedfbd');
+    ctx.fillStyle = grad;
+    ctx.fill();
+  }
   ctx.lineWidth = 3;
   ctx.strokeStyle = '#a58d63';
   ctx.stroke();
@@ -100,6 +111,21 @@ function paintFace(ctx: CanvasRenderingContext2D, suit: number, label: string): 
 }
 
 function paintBack(ctx: CanvasRenderingContext2D): void {
+  if (backImg) {
+    // кремовый кант со скруглёнными углами, внутри — рисунок рубашки
+    roundRect(ctx, 1.5, 1.5, TW - 3, TH - 3, 16);
+    ctx.fillStyle = '#efe6d0';
+    ctx.fill();
+    ctx.lineWidth = 2.5;
+    ctx.strokeStyle = '#8f7a55';
+    ctx.stroke();
+    ctx.save();
+    roundRect(ctx, 9, 9, TW - 18, TH - 18, 9);
+    ctx.clip();
+    ctx.drawImage(backImg, 9, 9, TW - 18, TH - 18);
+    ctx.restore();
+    return;
+  }
   const grad = ctx.createLinearGradient(0, 0, TW, TH);
   grad.addColorStop(0, '#8a2632');
   grad.addColorStop(1, '#5a141e');
@@ -217,6 +243,9 @@ function paintJoker(ctx: CanvasRenderingContext2D, label: string): void {
 /** Создаёт текстуры всех карт. Вызывается один раз после загрузки шрифтов. */
 export function createCardTextures(scene: Phaser.Scene): void {
   const labels = t('ranks').split(',');
+  const src = (key: string) => (scene.textures.exists(key) ? (scene.textures.get(key).getSourceImage() as CanvasImageSource) : null);
+  paperImg = src('card_paper');
+  backImg = src('card_back_art');
   const make = (key: string, paint: (ctx: CanvasRenderingContext2D) => void) => {
     if (scene.textures.exists(key)) scene.textures.remove(key);
     const tex = scene.textures.createCanvas(key, TW, TH)!;
@@ -230,30 +259,4 @@ export function createCardTextures(scene: Phaser.Scene): void {
   }
   make('card_back', paintBack);
   make('card_joker', (ctx) => paintJoker(ctx, t('joker')));
-}
-
-/** Фон игрового стола: зелёное сукно, освещённое лампой. */
-export function createTableTexture(scene: Phaser.Scene): void {
-  const w = 540;
-  const h = 1170;
-  const tex = scene.textures.createCanvas('bg_table', w, h)!;
-  const ctx = tex.getContext();
-  const grad = ctx.createRadialGradient(w / 2, h * 0.36, 40, w / 2, h * 0.42, h * 0.72);
-  grad.addColorStop(0, '#3c7a5f');
-  grad.addColorStop(0.45, '#245443');
-  grad.addColorStop(1, '#0d2420');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, w, h);
-  // зерно сукна
-  const img = ctx.getImageData(0, 0, w, h);
-  let seed = 12345;
-  for (let i = 0; i < img.data.length; i += 4) {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    const n = ((seed >>> 24) / 255 - 0.5) * 14;
-    img.data[i] += n;
-    img.data[i + 1] += n;
-    img.data[i + 2] += n;
-  }
-  ctx.putImageData(img, 0, 0);
-  tex.refresh();
 }
