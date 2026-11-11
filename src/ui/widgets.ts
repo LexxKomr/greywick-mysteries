@@ -158,6 +158,8 @@ export function roundButton(scene: Scene, x: number, y: number, radius: number, 
     shadow.fillCircle(0, 0, radius - 8);
   }
   draw(g);
+  // у картинки кнопки снизу толще бортик, кожаный круг выше середины — значок поднимаем к его центру
+  if (scene.textures.exists('button_round')) g.y = -radius * 0.12;
   parts.push(g);
   const c = scene.add.container(x, y, parts);
   c.setSize(radius * 2 + 16, radius * 2 + 16);

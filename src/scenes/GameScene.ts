@@ -14,7 +14,7 @@ import { fadeIn, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 
 const STEP = 106; // шаг карт по горизонтали
-const DY = 73; // шаг рядов по вертикали (стол в перспективе — ряды ближе)
+const DY = 68; // шаг рядов по вертикали (стол в перспективе — ряды ближе)
 const BIG = 1.5; // колода и сброс крупнее карт пиков
 
 export class GameScene extends Phaser.Scene {

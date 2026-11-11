@@ -11,10 +11,10 @@ import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, 
 import { fadeIn, toast, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 
-const PS = 1.1; // карты пирамиды крупнее обычных
-const STEP = 132;
+const PS = 1.2; // карты пирамиды крупнее обычных
+const STEP = 144;
 const DY = 69; // стол в перспективе — ряды ближе
-const BIG = 1.35;
+const BIG = 1.4;
 const FREE_HINTS = 3;
 
 export class PyramidScene extends Phaser.Scene {

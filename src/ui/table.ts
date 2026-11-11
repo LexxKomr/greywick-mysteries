@@ -150,9 +150,10 @@ function placeBackground(scene: Phaser.Scene, bgKey: string, needTop: number): n
 /** Фон стола и узкая верхняя полоска: дело, «Улика N из 12», звёзды. needTop — верх раскладки. */
 export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, needTop: number, needBottom: number): TableUi {
   const tableTop = placeBackground(scene, bgKey, needTop);
-  // раскладка посчитана от кнопок снизу; ставим её по центру между краем стола и низом раскладки
-  const from = tableTop + 24;
-  const dy = Math.min(0, from + Math.max(0, needBottom - from - (needBottom - needTop)) / 2 - needTop);
+  // раскладка посчитана от кнопок снизу; поднимаем её к дальнему краю стола — так удобнее смотреть
+  const dy = Math.min(0, tableTop + 40 - needTop);
+  // ближние карты (низ раскладки) — в полный размер, дальние мельче
+  persp.near = needBottom + dy;
 
   const g = scene.add.graphics().setDepth(400);
   g.fillStyle(0x0d151b, 0.82);
@@ -170,7 +171,7 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
 
   // кнопка «Правила»
   roundButton(scene, W - 226, STRIP_H / 2 - 2, 34, () => {}, () => showRules(scene, ctx.kind)).setDepth(401);
-  txt(scene, W - 226, STRIP_H / 2 - 5, '?', 46, C.paperLight, { head: true }).setDepth(402);
+  txt(scene, W - 226, STRIP_H / 2 - 9, '?', 46, C.paperLight, { head: true }).setDepth(402);
 
   const stars = scene.add.graphics().setDepth(401);
   const setStars = (n: number) => {

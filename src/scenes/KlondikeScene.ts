@@ -13,10 +13,10 @@ import { CardDrag } from '../ui/drag';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
-const CS = 1.25; // карты крупнее: столбиков всего семь
+const CS = 1.3; // карты крупнее: столбиков всего семь
 const CW = CARD_W * CS;
 const CH = CARD_H * CS;
-const STEP = 150;
+const STEP = 152;
 const X0 = (W - 6 * STEP) / 2;
 const FREE_HINTS = 3;
 
@@ -116,8 +116,8 @@ export class KlondikeScene extends Phaser.Scene {
     kg.tableau.forEach((pile, col) => {
       const downs = pile.filter((c) => !c.up).length;
       const ups = pile.length - downs;
-      let stepUp = 62;
-      let stepDown = 23;
+      let stepUp = 60;
+      let stepDown = 22;
       const room = this.tabBottom - (this.tabY - CH / 2);
       if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && ups > 1) stepUp = Math.max(40, (room - CH - downs * stepDown) / (ups - 1));
       if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && downs > 0) stepDown = Math.max(14, (room - CH - Math.max(0, ups - 1) * stepUp) / downs);

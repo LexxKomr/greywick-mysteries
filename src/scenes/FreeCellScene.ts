@@ -18,7 +18,7 @@ const CW = CARD_W * CS;
 const CH = CARD_H * CS;
 const STEP = 132;
 const X0 = (W - 7 * STEP) / 2;
-const FAN = 58; // стол в перспективе — карты в столбике ближе друг к другу
+const FAN = 54; // стол в перспективе — карты в столбике ближе друг к другу
 const FREE_HINTS = 3;
 
 export class FreeCellScene extends Phaser.Scene {
@@ -106,7 +106,7 @@ export class FreeCellScene extends Phaser.Scene {
     const room = this.tabBottom - (this.tabY - CH / 2);
     fc.cols.forEach((pile, col) => {
       let step = FAN;
-      if ((pile.length - 1) * step + CH > room) step = Math.max(29, (room - CH) / (pile.length - 1));
+      if ((pile.length - 1) * step + CH > room) step = Math.max(27, (room - CH) / (pile.length - 1));
       pile.forEach((c, i) => m.set(cardId(c), { x: X0 + col * STEP, y: this.tabY + i * step, depth: 300 + col * 30 + i, up: true }));
     });
     return m;
