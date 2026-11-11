@@ -10,8 +10,8 @@ import { t } from '../services/i18n';
 export const CARD_W = 104;
 /** Перспектива стола: карта лежит в плоскости стола, поэтому видна короче по высоте (SQ)
  *  и чуть уже у дальнего края (KEY — ширина верха к ширине низа). */
-export const SQ = 0.88;
-export const KEY = 0.93;
+export const SQ = 0.8;
+export const KEY = 0.9;
 const FLAT_H = 156;
 /** Видимая высота карты на столе (уже с учётом перспективы). */
 export const CARD_H = Math.round(FLAT_H * SQ);

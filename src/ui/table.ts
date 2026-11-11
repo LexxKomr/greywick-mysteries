@@ -52,6 +52,8 @@ export function levelCtx(sceneKey: string, data: LevelData): LevelCtx {
 export const STRIP_H = 96;
 
 export interface TableUi {
+  /** на сколько сдвинуть раскладку по высоте, чтобы она легла по центру столешницы (обычно вверх) */
+  dy: number;
   /** сколько звёзд игрок получит, если выиграет сейчас */
   setStars(n: number): void;
   /** включает мысли Эдит: y — где показывать облачко, canShow — можно ли сейчас */
@@ -72,7 +74,7 @@ const TABLES = tablesData as unknown as Record<string, TableZone>;
 export const persp = {
   far: 0,
   near: 1,
-  depth: 0.15,
+  depth: 0.2,
   s(y: number): number {
     const t = Math.max(0, Math.min(1, (this.near - y) / Math.max(1, this.near - this.far)));
     return 1 - this.depth * t;
@@ -96,12 +98,17 @@ export const HELPERS_Y_FROM_BOTTOM = 178;
  * чуть увеличивается — потолок уходит за верх экрана, а стол поднимается под карты.
  * needTop — с какой высоты экрана начинаются карты. Возвращает, где на экране верх столешницы.
  */
+/** Верх столешницы на экране — не ниже этой доли высоты. */
+const TABLE_TOP_MAX = 0.4;
+
 function placeBackground(scene: Phaser.Scene, bgKey: string, needTop: number): number {
   const zone = TABLES[bgKey] ?? { top: 0.5, dim: 0, edge: 0.4 };
   const bg = scene.add.image(W / 2, H, bgKey).setOrigin(0.5, 1);
   const base = Math.max(W / bg.width, H / bg.height);
   const needH = (H - (needTop - 12)) / (1 - zone.top);
-  const zoom = Math.max(1, needH / (bg.height * base));
+  // стол занимает больше экрана: его верх не ниже TABLE_TOP_MAX высоты, карты ближе к середине
+  const wantH = (H * (1 - TABLE_TOP_MAX)) / (1 - zone.top);
+  const zoom = Math.max(1, needH / (bg.height * base), wantH / (bg.height * base));
   bg.setScale(base * zoom);
   const shownH = bg.height * base * zoom;
   const tableTop = H - (1 - zone.top) * shownH;
@@ -141,8 +148,11 @@ function placeBackground(scene: Phaser.Scene, bgKey: string, needTop: number): n
 }
 
 /** Фон стола и узкая верхняя полоска: дело, «Улика N из 12», звёзды. needTop — верх раскладки. */
-export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, needTop: number): TableUi {
-  placeBackground(scene, bgKey, needTop);
+export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, needTop: number, needBottom: number): TableUi {
+  const tableTop = placeBackground(scene, bgKey, needTop);
+  // раскладка посчитана от кнопок снизу; ставим её по центру между краем стола и низом раскладки
+  const from = tableTop + 24;
+  const dy = Math.min(0, from + Math.max(0, needBottom - from - (needBottom - needTop)) / 2 - needTop);
 
   const g = scene.add.graphics().setDepth(400);
   g.fillStyle(0x0d151b, 0.82);
@@ -150,7 +160,7 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
   g.fillStyle(C.brass, 0.9);
   g.fillRect(0, STRIP_H - 3, W, 3);
   roundButton(scene, 56, STRIP_H / 2 - 2, 38, (ig) => {
-    ig.setScale(0.72);
+    ig.setScale(0.6);
     drawHome(ig);
   }, onHome).setDepth(401);
 
@@ -175,6 +185,7 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
   }
 
   return {
+    dy,
     setStars,
     thoughts: (y, canShow) => attachThoughts(scene, ctx.caseData, ctx.kind, y, canShow),
   };
@@ -214,12 +225,23 @@ export function helperButton(scene: Phaser.Scene, x: number, y: number, label: s
 /** Значки помощников. */
 export const icons = {
   undo(g: Phaser.GameObjects.Graphics): void {
+    // круговая стрелка против часовой: дуга с разрывом слева вверху, наконечник на её конце
+    const R = 26;
+    const a0 = Phaser.Math.DegToRad(250); // конец со стрелкой (вверху)
+    const a1 = Phaser.Math.DegToRad(165); // хвост (слева)
     g.lineStyle(10, C.paperLight, 1);
     g.beginPath();
-    g.arc(2, 4, 28, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(110), false);
+    g.arc(0, 2, R, a0, a1, false);
     g.strokePath();
+    // наконечник: смотрит по ходу «против часовой» в точке a0
+    const px = Math.cos(a0) * R;
+    const py = 2 + Math.sin(a0) * R;
+    const dx = Math.sin(a0);
+    const dy = -Math.cos(a0);
+    const nx = -dy;
+    const ny = dx;
     g.fillStyle(C.paperLight, 1);
-    g.fillTriangle(-42, -18, -12, -27, -32, 8);
+    g.fillTriangle(px + dx * 17, py + dy * 17, px - dx * 4 + nx * 15, py - dy * 4 + ny * 15, px - dx * 4 - nx * 15, py - dy * 4 - ny * 15);
   },
   joker(g: Phaser.GameObjects.Graphics): void {
     g.fillStyle(C.gold, 1);

@@ -13,7 +13,7 @@ import { CardDrag } from '../ui/drag';
 
 const PS = 1.1; // карты пирамиды крупнее обычных
 const STEP = 132;
-const DY = 76; // стол в перспективе — ряды ближе
+const DY = 69; // стол в перспективе — ряды ближе
 const BIG = 1.35;
 const FREE_HINTS = 3;
 
@@ -70,12 +70,14 @@ export class PyramidScene extends Phaser.Scene {
 
     // раскладка снизу вверх: помощники, колода, пирамида — всё на столе
     const helpersY = H - 178;
-    const deckY = Math.round(helpersY - 100 - (CARD_H * BIG) / 2);
-    const bottom = deckY - (CARD_H * BIG) / 2 - 40;
-    const top = Math.round(bottom - (6 * DY + CARD_H * PS));
+    let deckY = Math.round(helpersY - 100 - (CARD_H * BIG) / 2);
+    let top = Math.round(deckY - (CARD_H * BIG) / 2 - 40 - (6 * DY + CARD_H * PS));
+    this.ui = buildTable(this, 'table_kitchen', ctx, () => !this.finished && exitDialog(this, ctx), top, deckY + (CARD_H * BIG) / 2);
+    // по центру столешницы
+    deckY += this.ui.dy;
+    top += this.ui.dy;
     this.stockPos = { x: W / 2 - 130, y: deckY };
     this.wastePos = { x: W / 2 + 130, y: deckY };
-    this.ui = buildTable(this, 'table_kitchen', ctx, () => !this.finished && exitDialog(this, ctx), top);
     this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
 
 

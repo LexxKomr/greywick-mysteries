@@ -14,7 +14,7 @@ import { fadeIn, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 
 const STEP = 106; // шаг карт по горизонтали
-const DY = 80; // шаг рядов по вертикали (стол в перспективе — ряды ближе)
+const DY = 73; // шаг рядов по вертикали (стол в перспективе — ряды ближе)
 const BIG = 1.5; // колода и сброс крупнее карт пиков
 
 export class GameScene extends Phaser.Scene {
@@ -71,12 +71,14 @@ export class GameScene extends Phaser.Scene {
 
     // карты лежат на столе: раскладка снизу вверх — помощники, колода, пики
     const helpersY = H - 178;
-    const deckY = Math.round(helpersY - 100 - (CARD_H * BIG) / 2);
-    const peaksBottom = deckY - (CARD_H * BIG) / 2 - 50;
-    const peaksTop = Math.round(peaksBottom - (3 * DY + CARD_H));
+    let deckY = Math.round(helpersY - 100 - (CARD_H * BIG) / 2);
+    let peaksTop = Math.round(deckY - (CARD_H * BIG) / 2 - 50 - (3 * DY + CARD_H));
+    this.ui = buildTable(this, 'table_library', ctx, () => !this.finished && exitDialog(this, ctx), peaksTop, deckY + (CARD_H * BIG) / 2);
+    // по центру столешницы
+    deckY += this.ui.dy;
+    peaksTop += this.ui.dy;
     this.stockPos = { x: W / 2 - 130, y: deckY };
     this.wastePos = { x: W / 2 + 130, y: deckY };
-    this.ui = buildTable(this, 'table_library', ctx, () => !this.finished && exitDialog(this, ctx), peaksTop);
     this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
 
 

@@ -61,7 +61,10 @@ export class KlondikeScene extends Phaser.Scene {
     const room = Math.max(630, this.tabBottom - (naturalTableTop('table_tearoom') + 10 + CH + 28));
     this.tabY = this.tabBottom - room + CH / 2;
     this.topY = this.tabY - CH - 28;
-    this.ui = buildTable(this, 'table_tearoom', ctx, () => !this.finished && exitDialog(this, ctx), this.topY - CH / 2);
+    this.ui = buildTable(this, 'table_tearoom', ctx, () => !this.finished && exitDialog(this, ctx), this.topY - CH / 2, this.tabBottom);
+    // по центру столешницы; низ столбиков остаётся у кнопок — места для длинных столбиков больше
+    this.topY += this.ui.dy;
+    this.tabY += this.ui.dy;
     this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.busy, dead: () => this.isDead(), onDead: () => this.onStuck() });
 
 
@@ -113,8 +116,8 @@ export class KlondikeScene extends Phaser.Scene {
     kg.tableau.forEach((pile, col) => {
       const downs = pile.filter((c) => !c.up).length;
       const ups = pile.length - downs;
-      let stepUp = 68;
-      let stepDown = 25;
+      let stepUp = 62;
+      let stepDown = 23;
       const room = this.tabBottom - (this.tabY - CH / 2);
       if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && ups > 1) stepUp = Math.max(40, (room - CH - downs * stepDown) / (ups - 1));
       if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && downs > 0) stepDown = Math.max(14, (room - CH - Math.max(0, ups - 1) * stepUp) / downs);

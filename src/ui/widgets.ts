@@ -183,11 +183,12 @@ export function roundButton(scene: Scene, x: number, y: number, radius: number, 
 
 /** Значок «домик» для кнопки «в меню». */
 export function drawHome(g: G): void {
+  // домик ровно по центру кнопки: от -28 до +28 по высоте
   g.fillStyle(C.paperLight, 1);
-  g.fillTriangle(-30, -2, 0, -32, 30, -2);
-  g.fillRect(-21, -4, 42, 30);
+  g.fillTriangle(-29, -2, 0, -28, 29, -2);
+  g.fillRect(-20, -4, 40, 32);
   g.fillStyle(C.wood, 1);
-  g.fillRect(-7, 6, 14, 20);
+  g.fillRect(-7, 10, 14, 18);
 }
 
 /** Значок «стрелка назад». */
