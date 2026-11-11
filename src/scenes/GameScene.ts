@@ -8,7 +8,7 @@ import { solveTriPeaksFrom } from '../logic/solver';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
-import { CARD_H, CARD_TEX_SCALE, CARD_W, cardKey } from '../ui/cards';
+import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
 import { fadeIn, txt } from '../ui/widgets';
 
@@ -65,16 +65,16 @@ export class GameScene extends Phaser.Scene {
     this.rng = mulberry32(Date.now() & 0xffffff);
     (window as unknown as { __tp: unknown }).__tp = { game: this.tp, deal: this.deal, scene: this };
 
-    this.ui = buildTable(this, 'table_library', ctx, () => !this.finished && exitDialog(this, ctx));
-    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
-
-    // карты лежат на столе: пики от середины экрана, ниже колода, внизу помощники
-    const peaksTop = Math.round(H * 0.485);
-    const peaksBottom = peaksTop + 3 * DY + CARD_H;
+    // карты лежат на столе: раскладка снизу вверх — помощники, колода, пики
     const helpersY = H - 178;
-    const deckY = Math.round((peaksBottom + helpersY - 80) / 2);
+    const deckY = Math.round(helpersY - 100 - (CARD_H * BIG) / 2);
+    const peaksBottom = deckY - (CARD_H * BIG) / 2 - 50;
+    const peaksTop = Math.round(peaksBottom - (3 * DY + CARD_H));
     this.stockPos = { x: W / 2 - 130, y: deckY };
     this.wastePos = { x: W / 2 + 130, y: deckY };
+    this.ui = buildTable(this, 'table_library', ctx, () => !this.finished && exitDialog(this, ctx), peaksTop);
+    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
+
 
     this.buildDeck();
     this.buildTableau(peaksTop);
@@ -96,7 +96,7 @@ export class GameScene extends Phaser.Scene {
     this.stockEmpty.lineStyle(5, C.brassLight, 0.4);
     this.stockEmpty.strokeRoundedRect(x - cw / 2, y - ch / 2, cw, ch, 18);
     for (let i = 0; i < 3; i++) {
-      this.stockBacks.push(this.add.image(x - 14 + i * 7, y - 6 + i * 3, 'card_back').setScale(CARD_TEX_SCALE * BIG));
+      this.stockBacks.push(this.add.image(x - 14 + i * 7, y - 6 + i * 3, 'card_back').setScale(CARD_TEX_SCALE * BIG).setAngle(tableAngle(90 + i)));
     }
     const zone = this.add.zone(x, y, cw + 40, ch + 40).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.tapStock());
@@ -129,8 +129,8 @@ export class GameScene extends Phaser.Scene {
       this.home.push({ x, y });
       const open = this.tp.isOpen(i);
       this.faceUp.push(open);
-      const s = this.add.image(this.stockPos.x, this.stockPos.y, 'card_back').setScale(CARD_TEX_SCALE).setDepth(i);
-      s.setInteractive({ useHandCursor: true });
+      const s = this.add.image(this.stockPos.x, this.stockPos.y, 'card_back').setScale(CARD_TEX_SCALE).setDepth(i).setAngle(tableAngle(i * 7 + this.ctx.level));
+      cardInteractive(s);
       s.on('pointerdown', () => this.tapCard(i));
       this.sprites.push(s);
       // раздача: карты разлетаются из колоды
@@ -204,7 +204,7 @@ export class GameScene extends Phaser.Scene {
       },
       onComplete: () => {
         // показываем то, что сейчас действительно сверху сброса
-        this.wasteSprite.setTexture(cardKey(this.tp.top));
+        this.setWaste();
         if (temp) s.destroy();
         else s.setVisible(false);
       },
@@ -258,10 +258,16 @@ export class GameScene extends Phaser.Scene {
       this.faceUp[i] = open;
       s.setTexture(open ? cardKey(card) : 'card_back');
       s.setPosition(this.home[i].x, this.home[i].y).setScale(CARD_TEX_SCALE).setDepth(i);
-      s.setInteractive({ useHandCursor: true });
+      cardInteractive(s);
     }
-    this.wasteSprite.setTexture(cardKey(this.tp.top));
+    this.setWaste();
     this.refreshHud();
+  }
+
+  /** Верхняя карта сброса, чуть наискось — как положили. */
+  private setWaste(): void {
+    const top = this.tp.top;
+    this.wasteSprite.setTexture(cardKey(top)).setAngle(tableAngle(top.rank * 4 + top.suit + this.tp.waste.length));
   }
 
   private refreshHud(): void {

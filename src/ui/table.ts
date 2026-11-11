@@ -10,6 +10,7 @@ import { attachThoughts, showIntro, showRules } from './edith';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
+import tablesData from '../data/tables.json';
 import { DialogButton, dialogsOpen, drawHome, drawStar, roundButton, showDialog, starsRow, txt } from './widgets';
 
 export interface LevelData {
@@ -57,20 +58,72 @@ export interface TableUi {
   thoughts(y: number, canShow: () => boolean): void;
 }
 
-/** Фон стола и узкая верхняя полоска: дело, «Улика N из 12», звёзды. */
-export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, shade = 0, shadeFrom = 0.3): TableUi {
-  const bg = scene.add.image(W / 2, H / 2, bgKey);
-  bg.setScale(Math.max(W / bg.width, H / bg.height));
-  if (shade > 0) {
-    // лёгкое затемнение под картами (для пёстрых столов)
-    const sh = scene.add.graphics();
-    const y0 = H * shadeFrom;
-    const y1 = H * (shadeFrom + 0.2);
-    sh.fillGradientStyle(0x0a1014, 0x0a1014, 0x0a1014, 0x0a1014, 0, 0, shade, shade);
-    sh.fillRect(0, y0, W, y1 - y0);
-    sh.fillStyle(0x0a1014, shade);
-    sh.fillRect(0, y1, W, H - y1);
+interface TableZone {
+  top: number;
+  dim: number;
+  edge: number;
+}
+const TABLES = tablesData as unknown as Record<string, TableZone>;
+
+/** Где на экране верх столешницы, если фон не увеличивать (для высоких экранов места больше). */
+export function naturalTableTop(bgKey: string): number {
+  const zone = TABLES[bgKey] ?? { top: 0.5 };
+  return zone.top * Math.max(H, 1920);
+}
+
+/** Отступ снизу, который занимают кнопки помощников с подписями. */
+export const HELPERS_Y_FROM_BOTTOM = 178;
+
+/**
+ * Фон-место: картинка прижата к низу экрана и, если раскладка не помещается на столешницу,
+ * чуть увеличивается — потолок уходит за верх экрана, а стол поднимается под карты.
+ * needTop — с какой высоты экрана начинаются карты. Возвращает, где на экране верх столешницы.
+ */
+function placeBackground(scene: Phaser.Scene, bgKey: string, needTop: number): number {
+  const zone = TABLES[bgKey] ?? { top: 0.5, dim: 0, edge: 0.4 };
+  const bg = scene.add.image(W / 2, H, bgKey).setOrigin(0.5, 1);
+  const base = Math.max(W / bg.width, H / bg.height);
+  const needH = (H - (needTop - 12)) / (1 - zone.top);
+  const zoom = Math.max(1, needH / (bg.height * base));
+  bg.setScale(base * zoom);
+  const shownH = bg.height * base * zoom;
+  const tableTop = H - (1 - zone.top) * shownH;
+
+  // свет лампы: края стола темнее, середина чуть теплее (под картами, на читаемость не влияет)
+  const key = 'table_light_' + scene.scene.key;
+  if (scene.textures.exists(key)) scene.textures.remove(key);
+  const tex = scene.textures.createCanvas(key, W, H)!;
+  const c = tex.getContext();
+  const cy = tableTop + (H - tableTop) * 0.38;
+  if (zone.dim > 0) {
+    const lin = c.createLinearGradient(0, tableTop - 120, 0, tableTop + 80);
+    lin.addColorStop(0, 'rgba(10,16,20,0)');
+    lin.addColorStop(1, `rgba(10,16,20,${zone.dim})`);
+    c.fillStyle = lin;
+    c.fillRect(0, tableTop - 120, W, H - tableTop + 120);
   }
+  const rad = c.createRadialGradient(W / 2, cy, 60, W / 2, cy, Math.max(W, H - tableTop) * 0.95);
+  rad.addColorStop(0, 'rgba(255,190,110,0.10)');
+  rad.addColorStop(0.45, 'rgba(40,24,10,0)');
+  rad.addColorStop(1, `rgba(6,4,2,${zone.edge})`);
+  c.fillStyle = rad;
+  c.fillRect(0, tableTop - 160, W, H - tableTop + 160);
+  // мягкий переход от стены к столу, чтобы затемнение не обрывалось линией
+  const fade = c.createLinearGradient(0, tableTop - 160, 0, tableTop);
+  fade.addColorStop(0, 'rgba(0,0,0,1)');
+  fade.addColorStop(1, 'rgba(0,0,0,0)');
+  c.globalCompositeOperation = 'destination-out';
+  c.fillStyle = fade;
+  c.fillRect(0, tableTop - 160, W, 160);
+  c.globalCompositeOperation = 'source-over';
+  tex.refresh();
+  scene.add.image(0, 0, key).setOrigin(0, 0);
+  return tableTop;
+}
+
+/** Фон стола и узкая верхняя полоска: дело, «Улика N из 12», звёзды. needTop — верх раскладки. */
+export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, needTop: number): TableUi {
+  placeBackground(scene, bgKey, needTop);
 
   const g = scene.add.graphics().setDepth(400);
   g.fillStyle(0x0d151b, 0.82);

@@ -7,12 +7,12 @@ import { klondikeSeed } from '../logic/seeds';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
-import { CARD_H, CARD_W } from '../ui/cards';
+import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
-const CS = 1.35; // карты крупнее: столбиков всего семь
+const CS = 1.25; // карты крупнее: столбиков всего семь
 const CW = CARD_W * CS;
 const CH = CARD_H * CS;
 const STEP = 150;
@@ -54,13 +54,15 @@ export class KlondikeScene extends Phaser.Scene {
     this.kg = new KlondikeGame(klondikeSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty));
     (window as unknown as { __kl: unknown }).__kl = { game: this.kg, scene: this };
 
-    this.ui = buildTable(this, 'table_tearoom', ctx, () => !this.finished && exitDialog(this, ctx), 0.5, 0);
+    // раскладка снизу вверх: кнопки, столбики, ряд домов и колоды; всё — на столешнице
+    const helpersY = H - 178;
+    this.tabBottom = helpersY - 112;
+    const room = Math.max(630, this.tabBottom - (naturalTableTop('table_tearoom') + 10 + CH + 28));
+    this.tabY = this.tabBottom - room + CH / 2;
+    this.topY = this.tabY - CH - 28;
+    this.ui = buildTable(this, 'table_tearoom', ctx, () => !this.finished && exitDialog(this, ctx), this.topY - CH / 2);
     this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.busy, dead: () => this.isDead(), onDead: () => this.onStuck() });
 
-    this.topY = STRIP_H + 26 + CH / 2;
-    this.tabY = this.topY + CH + 34;
-    const helpersY = H - 178;
-    this.tabBottom = helpersY - 250; // над кнопками оставлено место для облачка с мыслями Эдит
 
     // места под дома, сброс и колоду
     const g = this.add.graphics();
@@ -89,29 +91,30 @@ export class KlondikeScene extends Phaser.Scene {
     this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, icons.undo, () => this.tapUndo());
     this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), icons.hint, () => void this.tapHint());
     this.refreshHud();
-    this.ui.thoughts(helpersY - 178, () => !this.finished && !this.busy);
+    this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.busy);
   }
 
   /** Где сейчас должна лежать каждая карта. */
   private places(): Map<number, Placement> {
     const m = new Map<number, Placement>();
     const kg = this.kg;
-    kg.stock.forEach((c, i) => m.set(cardId(c), { x: X0 + 6 * STEP - Math.min(i, 2) * 3, y: this.topY - Math.min(i, 2) * 2, depth: i, up: false }));
-    kg.waste.forEach((c, i) => m.set(cardId(c), { x: X0 + 5 * STEP, y: this.topY, depth: 100 + i, up: true }));
+    kg.stock.forEach((c, i) => m.set(cardId(c), { x: X0 + 6 * STEP - Math.min(i, 2) * 3, y: this.topY - Math.min(i, 2) * 2, depth: i, up: false, angle: tableAngle(i) * 0.6 }));
+    kg.waste.forEach((c, i) => m.set(cardId(c), { x: X0 + 5 * STEP, y: this.topY, depth: 100 + i, up: true, angle: tableAngle(cardId(c)) }));
     for (let suit = 0; suit < 4; suit++) {
-      for (let rank = 1; rank <= kg.found[suit]; rank++) m.set(cardId({ rank, suit }), { x: X0 + suit * STEP, y: this.topY, depth: 200 + rank, up: true });
+      for (let rank = 1; rank <= kg.found[suit]; rank++) m.set(cardId({ rank, suit }), { x: X0 + suit * STEP, y: this.topY, depth: 200 + rank, up: true, angle: tableAngle(cardId({ rank, suit })) });
     }
     kg.tableau.forEach((pile, col) => {
       const downs = pile.filter((c) => !c.up).length;
       const ups = pile.length - downs;
-      let stepUp = 80;
-      const need = downs * 30 + Math.max(0, ups - 1) * stepUp + CH;
+      let stepUp = 76;
+      let stepDown = 28;
       const room = this.tabBottom - (this.tabY - CH / 2);
-      if (need > room && ups > 1) stepUp = Math.max(40, (room - CH - downs * 30) / (ups - 1));
+      if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && ups > 1) stepUp = Math.max(40, (room - CH - downs * stepDown) / (ups - 1));
+      if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && downs > 0) stepDown = Math.max(14, (room - CH - Math.max(0, ups - 1) * stepUp) / downs);
       let y = this.tabY;
       pile.forEach((c, i) => {
         m.set(cardId(c), { x: X0 + col * STEP, y, depth: 300 + col * 30 + i, up: c.up });
-        y += c.up ? stepUp : 30;
+        y += c.up ? stepUp : stepDown;
       });
     });
     return m;

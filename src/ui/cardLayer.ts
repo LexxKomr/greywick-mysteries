@@ -4,13 +4,15 @@
 
 import Phaser from 'phaser';
 import { Card } from '../logic/tripeaks';
-import { CARD_TEX_SCALE, cardKey } from './cards';
+import { CARD_TEX_SCALE, cardInteractive, cardKey } from './cards';
 
 export interface Placement {
   x: number;
   y: number;
   depth: number;
   up: boolean;
+  /** наклон в градусах (карты в столбиках лежат ровно, в домах и сбросе — чуть вразнобой) */
+  angle?: number;
 }
 
 export const cardId = (c: Card): number => (c.rank - 1) * 4 + c.suit;
@@ -30,7 +32,7 @@ export class CardLayer {
     let s = this.sprites.get(id);
     if (!s) {
       s = this.scene.add.image(this.origin.x, this.origin.y, 'card_back').setScale(this.texScale);
-      s.setInteractive({ useHandCursor: true });
+      cardInteractive(s);
       s.on('pointerdown', () => this.onTap(id));
       this.sprites.set(id, s);
       this.faceUp.set(id, false);
@@ -44,7 +46,8 @@ export class CardLayer {
     for (const [id, p] of places) {
       const s = this.sprite(id);
       const old = this.current.get(id);
-      const moved = !old || old.x !== p.x || old.y !== p.y;
+      const angle = p.angle ?? 0;
+      const moved = !old || old.x !== p.x || old.y !== p.y || (old.angle ?? 0) !== angle;
       const flipped = this.faceUp.get(id) !== p.up;
       if (flipped) {
         this.faceUp.set(id, p.up);
@@ -68,13 +71,14 @@ export class CardLayer {
             targets: s,
             x: p.x,
             y: p.y,
+            angle,
             duration: 190,
             delay: n * delayStep,
             ease: 'Cubic.easeOut',
             onComplete: () => s.setDepth(this.current.get(id)?.depth ?? p.depth),
           });
           n++;
-        } else s.setPosition(p.x, p.y).setDepth(p.depth);
+        } else s.setPosition(p.x, p.y).setAngle(angle).setDepth(p.depth);
       } else s.setDepth(p.depth);
       this.current.set(id, p);
     }

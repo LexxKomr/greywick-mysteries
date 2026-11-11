@@ -13,6 +13,19 @@ const S = 1.5;
 const TW = CARD_W * S;
 const TH = CARD_H * S;
 export const CARD_TEX_SCALE = 1 / S;
+/** Поле вокруг карты в текстуре: там лежит мягкая тень (вниз-вправо). */
+const PAD = 24;
+
+/** Нажимается только сама карта, без поля под тень. */
+export function cardInteractive(img: Phaser.GameObjects.Image): Phaser.GameObjects.Image {
+  return img.setInteractive({ hitArea: new Phaser.Geom.Rectangle(PAD, PAD, TW, TH), hitAreaCallback: Phaser.Geom.Rectangle.Contains, useHandCursor: true });
+}
+
+/** Угол «как бросили на стол»: ±1,5°, всегда одинаковый для одного числа (без дрожания). */
+export function tableAngle(n: number): number {
+  const h = Math.imul(n + 0x9e37, 0x85ebca6b) >>> 0;
+  return ((h % 1000) / 1000) * 3 - 1.5;
+}
 
 const RED = '#a3202a';
 const BLACK = '#2a221d';
@@ -76,6 +89,9 @@ function paintFaceBase(ctx: CanvasRenderingContext2D): void {
     ctx.save();
     ctx.clip();
     ctx.drawImage(paperImg, 0, 0, TW, TH);
+    // чуть теплее, как под лампой
+    ctx.fillStyle = 'rgba(255,165,80,0.05)';
+    ctx.fillRect(0, 0, TW, TH);
     ctx.restore();
     roundRect(ctx, 1.5, 1.5, TW - 3, TH - 3, 16);
   } else {
@@ -248,10 +264,35 @@ export function createCardTextures(scene: Phaser.Scene): void {
   backImg = src('card_back_art');
   const make = (key: string, paint: (ctx: CanvasRenderingContext2D) => void) => {
     if (scene.textures.exists(key)) scene.textures.remove(key);
-    const tex = scene.textures.createCanvas(key, TW, TH)!;
-    paint(tex.getContext());
+    const tex = scene.textures.createCanvas(key, TW + 2 * PAD, TH + 2 * PAD)!;
+    const ctx = tex.getContext();
+    // мягкая тень под картой
+    ctx.save();
+    ctx.shadowColor = 'rgba(0,0,0,0.55)';
+    ctx.shadowBlur = 13;
+    ctx.shadowOffsetX = 5;
+    ctx.shadowOffsetY = 8;
+    roundRect(ctx, PAD + 3, PAD + 3, TW - 6, TH - 6, 16);
+    ctx.fillStyle = '#000';
+    ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.translate(PAD, PAD);
+    paint(ctx);
+    ctx.restore();
     tex.refresh();
   };
+  // большая тень для карты «в руке» (при переносе)
+  if (scene.textures.exists('card_lift_shadow')) scene.textures.remove('card_lift_shadow');
+  const lift = scene.textures.createCanvas('card_lift_shadow', TW + 4 * PAD, TH + 4 * PAD)!;
+  const lc = lift.getContext();
+  lc.shadowColor = 'rgba(0,0,0,0.5)';
+  lc.shadowBlur = 30;
+  lc.shadowOffsetX = 2000;
+  roundRect(lc, 2 * PAD - 2000, 2 * PAD, TW, TH, 16);
+  lc.fillStyle = '#000';
+  lc.fill();
+  lift.refresh();
   for (let rank = 1; rank <= 13; rank++) {
     for (let suit = 0; suit < 4; suit++) {
       make(`card_${rank}_${suit}`, (ctx) => paintFace(ctx, suit, labels[rank - 1]));

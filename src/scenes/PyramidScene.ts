@@ -6,14 +6,14 @@ import { PYRAMID_SIZE, PYRAMID_TARGETS, PyramidDeal, PyramidGame, Spot, generate
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
-import { CARD_H, CARD_TEX_SCALE, CARD_W, cardKey } from '../ui/cards';
+import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
 
-const PS = 1.2; // карты пирамиды крупнее обычных
-const STEP = 136;
-const DY = 94;
-const BIG = 1.5;
+const PS = 1.1; // карты пирамиды крупнее обычных
+const STEP = 132;
+const DY = 86;
+const BIG = 1.35;
 const FREE_HINTS = 3;
 
 export class PyramidScene extends Phaser.Scene {
@@ -63,16 +63,16 @@ export class PyramidScene extends Phaser.Scene {
     this.py = new PyramidGame(this.deal);
     (window as unknown as { __py: unknown }).__py = { game: this.py, deal: this.deal, scene: this };
 
-    // клеёнка на кухне пёстрая — под картами слегка затемняем
-    this.ui = buildTable(this, 'table_kitchen', ctx, () => !this.finished && exitDialog(this, ctx), 0.42);
-    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
-
-    const top = Math.round(H * 0.265);
-    const bottom = top + 6 * DY + CARD_H * PS;
+    // раскладка снизу вверх: помощники, колода, пирамида — всё на столе
     const helpersY = H - 178;
-    const deckY = Math.round((bottom + helpersY - 80) / 2);
+    const deckY = Math.round(helpersY - 100 - (CARD_H * BIG) / 2);
+    const bottom = deckY - (CARD_H * BIG) / 2 - 40;
+    const top = Math.round(bottom - (6 * DY + CARD_H * PS));
     this.stockPos = { x: W / 2 - 130, y: deckY };
     this.wastePos = { x: W / 2 + 130, y: deckY };
+    this.ui = buildTable(this, 'table_kitchen', ctx, () => !this.finished && exitDialog(this, ctx), top);
+    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
+
 
     this.buildDeck();
     for (let i = 0; i < PYRAMID_SIZE; i++) {
@@ -81,8 +81,8 @@ export class PyramidScene extends Phaser.Scene {
       const x = W / 2 + (c - r / 2) * STEP;
       const y = top + r * DY + (CARD_H * PS) / 2;
       this.home.push({ x, y });
-      const s = this.add.image(W / 2, top - 200, cardKey(this.deal.pyramid[i])).setScale(CARD_TEX_SCALE * PS).setDepth(10 + i).setAlpha(0);
-      s.setInteractive({ useHandCursor: true });
+      const s = this.add.image(W / 2, top - 200, cardKey(this.deal.pyramid[i])).setScale(CARD_TEX_SCALE * PS).setDepth(10 + i).setAlpha(0).setAngle(tableAngle(i * 5 + ctx.level));
+      cardInteractive(s);
       s.on('pointerdown', () => this.tapSpot(i));
       this.sprites.push(s);
       this.tweens.add({ targets: s, x, y, alpha: 1, duration: 280, delay: 40 + i * 24, ease: 'Cubic.easeOut' });
@@ -110,7 +110,7 @@ export class PyramidScene extends Phaser.Scene {
     this.stockEmpty.fillStyle(C.brassLight, 0.7);
     this.stockEmpty.fillTriangle(x - 50, y - 22, x - 16, y - 32, x - 38, y + 8);
     for (let i = 0; i < 3; i++) {
-      this.stockBacks.push(this.add.image(x - 14 + i * 7, y - 6 + i * 3, 'card_back').setScale(CARD_TEX_SCALE * BIG));
+      this.stockBacks.push(this.add.image(x - 14 + i * 7, y - 6 + i * 3, 'card_back').setScale(CARD_TEX_SCALE * BIG).setAngle(tableAngle(90 + i)));
     }
     const zone = this.add.zone(x, y, cw + 40, ch + 40).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.tapStock());
@@ -127,7 +127,7 @@ export class PyramidScene extends Phaser.Scene {
     w.lineStyle(5, C.brassLight, 0.3);
     w.strokeRoundedRect(this.wastePos.x - cw / 2, y - ch / 2, cw, ch, 18);
     this.wasteSprite = this.add.image(this.wastePos.x, this.wastePos.y, 'card_back').setScale(CARD_TEX_SCALE * BIG).setDepth(100).setVisible(false);
-    this.wasteSprite.setInteractive({ useHandCursor: true });
+    cardInteractive(this.wasteSprite);
     this.wasteSprite.on('pointerdown', () => this.tapSpot('waste'));
 
     this.passText = txt(this, this.wastePos.x + cw / 2 + 24, y, '', 36, C.paperLight, { head: true, ox: 0, align: 'left' });
@@ -240,7 +240,7 @@ export class PyramidScene extends Phaser.Scene {
     this.tweens.killTweensOf(this.wasteSprite);
     const top = this.py.cardAt('waste');
     this.wasteSprite.setVisible(!!top).clearTint().setPosition(this.wastePos.x, this.wastePos.y).setScale(CARD_TEX_SCALE * BIG);
-    if (top) this.wasteSprite.setTexture(cardKey(top));
+    if (top) this.wasteSprite.setTexture(cardKey(top)).setAngle(tableAngle(top.rank * 4 + top.suit + this.py.waste.length));
     this.selected = null;
     this.refreshHud();
   }

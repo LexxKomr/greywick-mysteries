@@ -7,9 +7,9 @@ import { freecellSeed } from '../logic/seeds';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
-import { CARD_H, CARD_W } from '../ui/cards';
+import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, watchDead, winLevel } from '../ui/table';
 import { fadeIn } from '../ui/widgets';
 
 const CS = 1.2;
@@ -54,13 +54,15 @@ export class FreeCellScene extends Phaser.Scene {
     this.fc = new FreeCellGame(freecellSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty));
     (window as unknown as { __fc: unknown }).__fc = { game: this.fc, scene: this };
 
-    this.ui = buildTable(this, 'table_lighthouse', ctx, () => !this.finished && exitDialog(this, ctx), 0.5, 0);
+    // раскладка снизу вверх: кнопки, столбики, ряд ячеек и домов; всё — на столешнице
+    const helpersY = H - 178;
+    this.tabBottom = helpersY - 112;
+    const room = Math.max(560, this.tabBottom - (naturalTableTop('table_lighthouse') + 10 + CH + 28));
+    this.tabY = this.tabBottom - room + CH / 2;
+    this.topY = this.tabY - CH - 28;
+    this.ui = buildTable(this, 'table_lighthouse', ctx, () => !this.finished && exitDialog(this, ctx), this.topY - CH / 2);
     this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.busy, dead: () => this.isDead(), onDead: () => this.onStuck() });
 
-    this.topY = STRIP_H + 26 + CH / 2;
-    this.tabY = this.topY + CH + 34;
-    const helpersY = H - 178;
-    this.tabBottom = helpersY - 250; // над кнопками оставлено место для облачка с мыслями Эдит
 
     // четыре свободные ячейки слева, четыре дома справа
     const g = this.add.graphics();
@@ -77,7 +79,7 @@ export class FreeCellScene extends Phaser.Scene {
     this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, icons.undo, () => this.tapUndo());
     this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), icons.hint, () => void this.tapHint());
     this.refreshHud();
-    this.ui.thoughts(helpersY - 178, () => !this.finished && !this.busy);
+    this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.busy);
     // тузы, лежащие сверху, сразу уходят в дома
     this.time.delayedCall(900, () => this.afterMove());
   }
@@ -86,10 +88,10 @@ export class FreeCellScene extends Phaser.Scene {
     const m = new Map<number, Placement>();
     const fc = this.fc;
     fc.cells.forEach((c, i) => {
-      if (c) m.set(cardId(c), { x: X0 + i * STEP, y: this.topY, depth: 100, up: true });
+      if (c) m.set(cardId(c), { x: X0 + i * STEP, y: this.topY, depth: 100, up: true, angle: tableAngle(cardId(c)) });
     });
     for (let suit = 0; suit < 4; suit++) {
-      for (let rank = 1; rank <= fc.found[suit]; rank++) m.set(cardId({ rank, suit }), { x: X0 + (4 + suit) * STEP, y: this.topY, depth: 200 + rank, up: true });
+      for (let rank = 1; rank <= fc.found[suit]; rank++) m.set(cardId({ rank, suit }), { x: X0 + (4 + suit) * STEP, y: this.topY, depth: 200 + rank, up: true, angle: tableAngle(cardId({ rank, suit })) });
     }
     const room = this.tabBottom - (this.tabY - CH / 2);
     fc.cols.forEach((pile, col) => {
