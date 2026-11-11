@@ -13,3 +13,16 @@ export function klondikeSeed(caseNumber: number, level: number, difficulty: numb
   const band = KLONDIKE_SEEDS[Math.max(0, Math.min(2, difficulty - 1))];
   return band[(caseNumber * 7 + level * 3) % band.length];
 }
+
+// Раскладки «Свободной ячейки»: каждая решена решателем (src/logic/freecell.ts).
+// Наборы по трудности: чем больше решателю пришлось перебрать, тем раскладка труднее.
+export const FREECELL_SEEDS: number[][] = [
+  [25, 31, 37, 55, 83, 98, 149, 158, 222, 251, 259, 263],
+  [85, 103, 128, 142, 164, 187, 190, 200, 240, 241, 248, 250],
+  [13, 27, 43, 58, 75, 86, 87, 122, 161, 203, 227, 252],
+];
+
+export function freecellSeed(caseNumber: number, level: number, difficulty: number): number {
+  const band = FREECELL_SEEDS[Math.max(0, Math.min(2, difficulty - 1))];
+  return band[(caseNumber * 7 + level * 3) % band.length];
+}

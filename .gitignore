@@ -4,3 +4,4 @@ dist
 .vite
 calibrate.log
 seeds.log
+seeds_fc.log
