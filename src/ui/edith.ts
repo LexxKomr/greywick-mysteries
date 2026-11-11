@@ -164,11 +164,15 @@ export function attachThoughts(scene: Phaser.Scene, c: CaseData | null, kind: Ga
   let hintGiven = false;
   let bubble: Phaser.GameObjects.Container | null = null;
   let hideEvent: Phaser.Time.TimerEvent | null = null;
+  let shownAt = 0;
 
   const hide = () => {
     hideEvent?.remove();
     hideEvent = null;
     if (!bubble) return;
+    // пока облачко было на экране, таймер простоя стоял
+    const now = scene.time.now;
+    lastActivity += Math.max(0, now - Math.max(shownAt, lastActivity));
     const b = bubble;
     bubble = null;
     scene.tweens.add({ targets: b, alpha: 0, duration: 200, onComplete: () => b.destroy() });
@@ -193,7 +197,11 @@ export function attachThoughts(scene: Phaser.Scene, c: CaseData | null, kind: Ga
     g.fillCircle(86, 0, 62);
     text.setPosition(bx + 30, 0);
     const face = scene.add.image(86, 0, 'edith').setDisplaySize(116, 116);
-    bubble = scene.add.container(0, y, [g, face, text]).setDepth(450).setAlpha(0);
+    // облачко закрывается раньше времени только нажатием на него самого
+    const hit = scene.add.zone(20, -Math.max(bh, 132) / 2, bx + bw - 20, Math.max(bh, 132)).setOrigin(0, 0).setInteractive({ useHandCursor: true });
+    hit.on('pointerdown', () => hide());
+    bubble = scene.add.container(0, y, [g, face, text, hit]).setDepth(450).setAlpha(0);
+    shownAt = scene.time.now;
     scene.tweens.add({ targets: bubble, alpha: 1, duration: 250 });
     hideEvent = scene.time.delayedCall(SHOW_MS + (line.length > 80 ? 2000 : 0), hide);
     lastBubbleAt = Date.now();
@@ -203,7 +211,6 @@ export function attachThoughts(scene: Phaser.Scene, c: CaseData | null, kind: Ga
     lastActivity = scene.time.now;
     thoughtGiven = false;
     hintGiven = false;
-    hide(); // облачко исчезает по нажатию
   });
 
   scene.time.addEvent({
