@@ -65,6 +65,23 @@ interface TableZone {
 }
 const TABLES = tablesData as unknown as Record<string, TableZone>;
 
+/**
+ * Перспектива стола: дальние карты (выше на экране) чуть мельче и ближе к середине,
+ * как на снимке стола под углом. far — верх столешницы, near — нижний край раскладки.
+ */
+export const persp = {
+  far: 0,
+  near: 1,
+  depth: 0.15,
+  s(y: number): number {
+    const t = Math.max(0, Math.min(1, (this.near - y) / Math.max(1, this.near - this.far)));
+    return 1 - this.depth * t;
+  },
+  x(x: number, y: number): number {
+    return W / 2 + (x - W / 2) * this.s(y);
+  },
+};
+
 /** Где на экране верх столешницы, если фон не увеличивать (для высоких экранов места больше). */
 export function naturalTableTop(bgKey: string): number {
   const zone = TABLES[bgKey] ?? { top: 0.5 };
@@ -88,6 +105,8 @@ function placeBackground(scene: Phaser.Scene, bgKey: string, needTop: number): n
   bg.setScale(base * zoom);
   const shownH = bg.height * base * zoom;
   const tableTop = H - (1 - zone.top) * shownH;
+  persp.far = tableTop;
+  persp.near = H - 300;
 
   // свет лампы: края стола темнее, середина чуть теплее (под картами, на читаемость не влияет)
   const key = 'table_light_' + scene.scene.key;

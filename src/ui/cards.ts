@@ -8,17 +8,23 @@ import { t } from '../services/i18n';
 
 /** Размер карты на столе (в игровых пикселях). Текстуры рисуются в 1,5 раза крупнее для чёткости. */
 export const CARD_W = 104;
-export const CARD_H = 156;
+/** Перспектива стола: карта лежит в плоскости стола, поэтому видна короче по высоте (SQ)
+ *  и чуть уже у дальнего края (KEY — ширина верха к ширине низа). */
+export const SQ = 0.88;
+export const KEY = 0.93;
+const FLAT_H = 156;
+/** Видимая высота карты на столе (уже с учётом перспективы). */
+export const CARD_H = Math.round(FLAT_H * SQ);
 const S = 1.5;
 const TW = CARD_W * S;
-const TH = CARD_H * S;
+const TH = FLAT_H * S;
 export const CARD_TEX_SCALE = 1 / S;
 /** Поле вокруг карты в текстуре: там лежит мягкая тень (вниз-вправо). */
 const PAD = 24;
 
 /** Нажимается только сама карта, без поля под тень. */
 export function cardInteractive(img: Phaser.GameObjects.Image): Phaser.GameObjects.Image {
-  return img.setInteractive({ hitArea: new Phaser.Geom.Rectangle(PAD, PAD, TW, TH), hitAreaCallback: Phaser.Geom.Rectangle.Contains, useHandCursor: true });
+  return img.setInteractive({ hitArea: new Phaser.Geom.Rectangle(PAD, PAD * SQ, TW, TH * SQ), hitAreaCallback: Phaser.Geom.Rectangle.Contains, useHandCursor: true });
 }
 
 /** Угол «как бросили на стол»: ±1,5°, всегда одинаковый для одного числа (без дрожания). */
@@ -262,10 +268,13 @@ export function createCardTextures(scene: Phaser.Scene): void {
   const src = (key: string) => (scene.textures.exists(key) ? (scene.textures.get(key).getSourceImage() as CanvasImageSource) : null);
   paperImg = src('card_paper');
   backImg = src('card_back_art');
+  const flat = document.createElement('canvas');
+  flat.width = TW + 2 * PAD;
+  flat.height = TH + 2 * PAD;
   const make = (key: string, paint: (ctx: CanvasRenderingContext2D) => void) => {
     if (scene.textures.exists(key)) scene.textures.remove(key);
-    const tex = scene.textures.createCanvas(key, TW + 2 * PAD, TH + 2 * PAD)!;
-    const ctx = tex.getContext();
+    const ctx = flat.getContext('2d')!;
+    ctx.clearRect(0, 0, flat.width, flat.height);
     // мягкая тень под картой
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.55)';
@@ -280,16 +289,27 @@ export function createCardTextures(scene: Phaser.Scene): void {
     ctx.translate(PAD, PAD);
     paint(ctx);
     ctx.restore();
+    // кладём карту в плоскость стола: короче по высоте, верх чуть уже низа
+    const outW = flat.width;
+    const outH = Math.round(flat.height * SQ);
+    const tex = scene.textures.createCanvas(key, outW, outH)!;
+    const out = tex.getContext();
+    out.imageSmoothingQuality = 'high';
+    for (let r = 0; r < outH; r++) {
+      const k = KEY + (1 - KEY) * (r / (outH - 1));
+      const w = outW * k;
+      out.drawImage(flat, 0, (r * flat.height) / outH, outW, flat.height / outH, (outW - w) / 2, r, w, 1);
+    }
     tex.refresh();
   };
   // большая тень для карты «в руке» (при переносе)
   if (scene.textures.exists('card_lift_shadow')) scene.textures.remove('card_lift_shadow');
-  const lift = scene.textures.createCanvas('card_lift_shadow', TW + 4 * PAD, TH + 4 * PAD)!;
+  const lift = scene.textures.createCanvas('card_lift_shadow', TW + 4 * PAD, Math.round((TH + 4 * PAD) * SQ))!;
   const lc = lift.getContext();
   lc.shadowColor = 'rgba(0,0,0,0.5)';
   lc.shadowBlur = 30;
   lc.shadowOffsetX = 2000;
-  roundRect(lc, 2 * PAD - 2000, 2 * PAD, TW, TH, 16);
+  roundRect(lc, 2 * PAD - 2000, 2 * PAD * SQ, TW, TH * SQ, 16);
   lc.fillStyle = '#000';
   lc.fill();
   lift.refresh();

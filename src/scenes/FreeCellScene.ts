@@ -9,7 +9,7 @@ import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn } from '../ui/widgets';
 
 const CS = 1.2;
@@ -17,7 +17,7 @@ const CW = CARD_W * CS;
 const CH = CARD_H * CS;
 const STEP = 132;
 const X0 = (W - 7 * STEP) / 2;
-const FAN = 72;
+const FAN = 64; // стол в перспективе — карты в столбике ближе друг к другу
 const FREE_HINTS = 3;
 
 export class FreeCellScene extends Phaser.Scene {
@@ -69,7 +69,7 @@ export class FreeCellScene extends Phaser.Scene {
     for (let i = 0; i < 4; i++) {
       drawSlot(g, X0 + i * STEP, this.topY, CW, CH, 0.55);
       drawSlot(g, X0 + (4 + i) * STEP, this.topY, CW, CH, 0.35);
-      this.add.image(X0 + (4 + i) * STEP, this.topY, 'suit_' + i).setAlpha(0.4).setScale(0.9);
+      this.add.image(persp.x(X0 + (4 + i) * STEP, this.topY), this.topY, 'suit_' + i).setAlpha(0.4).setScale(0.9 * persp.s(this.topY), 0.8 * persp.s(this.topY));
     }
     for (let c = 0; c < 8; c++) drawSlot(g, X0 + c * STEP, this.tabY, CW, CH, 0.18);
 
@@ -96,7 +96,7 @@ export class FreeCellScene extends Phaser.Scene {
     const room = this.tabBottom - (this.tabY - CH / 2);
     fc.cols.forEach((pile, col) => {
       let step = FAN;
-      if ((pile.length - 1) * step + CH > room) step = Math.max(36, (room - CH) / (pile.length - 1));
+      if ((pile.length - 1) * step + CH > room) step = Math.max(32, (room - CH) / (pile.length - 1));
       pile.forEach((c, i) => m.set(cardId(c), { x: X0 + col * STEP, y: this.tabY + i * step, depth: 300 + col * 30 + i, up: true }));
     });
     return m;

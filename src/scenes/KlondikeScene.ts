@@ -9,7 +9,7 @@ import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
 const CS = 1.25; // карты крупнее: столбиков всего семь
@@ -68,14 +68,14 @@ export class KlondikeScene extends Phaser.Scene {
     const g = this.add.graphics();
     for (let i = 0; i < 4; i++) {
       drawSlot(g, X0 + i * STEP, this.topY, CW, CH);
-      this.add.image(X0 + i * STEP, this.topY, 'suit_' + i).setAlpha(0.4);
+      this.add.image(persp.x(X0 + i * STEP, this.topY), this.topY, 'suit_' + i).setAlpha(0.4).setScale(persp.s(this.topY), persp.s(this.topY) * 0.88);
     }
     drawSlot(g, X0 + 5 * STEP, this.topY, CW, CH, 0.25);
     drawSlot(g, X0 + 6 * STEP, this.topY, CW, CH, 0.5);
     for (let c = 0; c < 7; c++) drawSlot(g, X0 + c * STEP, this.tabY, CW, CH, 0.18);
     // круговая стрелка на пустой колоде: перевернуть сброс
     this.stockRing = this.add.graphics();
-    const sx = X0 + 6 * STEP;
+    const sx = persp.x(X0 + 6 * STEP, this.topY);
     this.stockRing.lineStyle(9, C.brassLight, 0.75);
     this.stockRing.beginPath();
     this.stockRing.arc(sx, this.topY, 34, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(110), false);
@@ -106,8 +106,8 @@ export class KlondikeScene extends Phaser.Scene {
     kg.tableau.forEach((pile, col) => {
       const downs = pile.filter((c) => !c.up).length;
       const ups = pile.length - downs;
-      let stepUp = 76;
-      let stepDown = 28;
+      let stepUp = 68;
+      let stepDown = 25;
       const room = this.tabBottom - (this.tabY - CH / 2);
       if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && ups > 1) stepUp = Math.max(40, (room - CH - downs * stepDown) / (ups - 1));
       if (downs * stepDown + Math.max(0, ups - 1) * stepUp + CH > room && downs > 0) stepDown = Math.max(14, (room - CH - Math.max(0, ups - 1) * stepUp) / downs);

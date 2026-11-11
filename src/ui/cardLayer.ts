@@ -4,7 +4,8 @@
 
 import Phaser from 'phaser';
 import { Card } from '../logic/tripeaks';
-import { CARD_TEX_SCALE, cardInteractive, cardKey } from './cards';
+import { CARD_TEX_SCALE, KEY, cardInteractive, cardKey } from './cards';
+import { persp } from './table';
 
 export interface Placement {
   x: number;
@@ -43,44 +44,55 @@ export class CardLayer {
   /** Раскладывает карты по местам. delayStep — задержка между картами (для раздачи). */
   apply(places: Map<number, Placement>, animate = true, delayStep = 0): void {
     let n = 0;
-    for (const [id, p] of places) {
+    for (const [id, raw] of places) {
       const s = this.sprite(id);
-      const old = this.current.get(id);
+      // точка на столе -> точка на экране с перспективой
+      const sc = this.texScale * persp.s(raw.y);
+      const p: Placement = { ...raw, x: persp.x(raw.x, raw.y) };
       const angle = p.angle ?? 0;
+      const old = this.current.get(id);
       const moved = !old || old.x !== p.x || old.y !== p.y || (old.angle ?? 0) !== angle;
       const flipped = this.faceUp.get(id) !== p.up;
-      if (flipped) {
-        this.faceUp.set(id, p.up);
-        const key = p.up ? cardKey(cardOfId(id)) : 'card_back';
-        if (animate && !delayStep) {
-          this.scene.tweens.add({
-            targets: s,
-            scaleX: 0,
-            duration: 70,
-            onComplete: () => {
-              s.setTexture(key);
-              this.scene.tweens.add({ targets: s, scaleX: this.texScale, duration: 70 });
-            },
-          });
-        } else s.setTexture(key);
+      this.current.set(id, p);
+      if (flipped) this.faceUp.set(id, p.up);
+      const key = p.up ? cardKey(cardOfId(id)) : 'card_back';
+      if (!animate) {
+        s.setTexture(key).setPosition(p.x, p.y).setAngle(angle).setScale(sc).setDepth(p.depth);
+        continue;
+      }
+      if (flipped && !delayStep) {
+        // переворот: сжать, сменить картинку, разжать
+        this.scene.tweens.add({
+          targets: s,
+          scaleX: 0,
+          duration: 70,
+          onComplete: () => {
+            s.setTexture(key);
+            this.scene.tweens.add({ targets: s, scaleX: sc, duration: 70 });
+          },
+        });
+      } else {
+        if (flipped) s.setTexture(key);
+        if (s.scaleX !== sc) this.scene.tweens.add({ targets: s, scaleX: sc, duration: 190, delay: n * delayStep });
       }
       if (moved) {
-        if (animate) {
-          s.setDepth(1000 + p.depth);
-          this.scene.tweens.add({
-            targets: s,
-            x: p.x,
-            y: p.y,
-            angle,
-            duration: 190,
-            delay: n * delayStep,
-            ease: 'Cubic.easeOut',
-            onComplete: () => s.setDepth(this.current.get(id)?.depth ?? p.depth),
-          });
-          n++;
-        } else s.setPosition(p.x, p.y).setAngle(angle).setDepth(p.depth);
-      } else s.setDepth(p.depth);
-      this.current.set(id, p);
+        s.setDepth(1000 + p.depth);
+        this.scene.tweens.add({
+          targets: s,
+          x: p.x,
+          y: p.y,
+          angle,
+          scaleY: sc,
+          duration: 190,
+          delay: n * delayStep,
+          ease: 'Cubic.easeOut',
+          onComplete: () => s.setDepth(this.current.get(id)?.depth ?? p.depth),
+        });
+        n++;
+      } else {
+        s.setDepth(p.depth);
+        if (s.scaleY !== sc) s.setScale(s.scaleX, sc);
+      }
     }
   }
 
@@ -90,7 +102,8 @@ export class CardLayer {
       const s = this.sprites.get(id);
       if (!s) continue;
       s.setTint(0xffd36b);
-      this.scene.tweens.add({ targets: s, scaleY: this.texScale * 1.1, duration: 220, yoyo: true, repeat: 2, onComplete: () => s.clearTint().setScale(this.texScale) });
+      const base = s.scaleY;
+      this.scene.tweens.add({ targets: s, scaleY: base * 1.1, duration: 220, yoyo: true, repeat: 2, onComplete: () => s.clearTint().setScale(base) });
     }
   }
 
@@ -105,8 +118,19 @@ export class CardLayer {
 
 /** Пустое место под карту: тонкая рамка и, если нужно, масть. */
 export function drawSlot(g: Phaser.GameObjects.Graphics, x: number, y: number, w: number, h: number, alpha = 0.4): void {
+  // место лежит на столе: трапеция с перспективой, как и карты
+  const k = persp.s(y);
+  const cx = persp.x(x, y);
+  const hw = (w * k) / 2;
+  const hh = (h * k) / 2;
+  const pts = [
+    new Phaser.Math.Vector2(cx - hw * KEY, y - hh),
+    new Phaser.Math.Vector2(cx + hw * KEY, y - hh),
+    new Phaser.Math.Vector2(cx + hw, y + hh),
+    new Phaser.Math.Vector2(cx - hw, y + hh),
+  ];
   g.fillStyle(0x000000, 0.22);
-  g.fillRoundedRect(x - w / 2, y - h / 2, w, h, 14);
+  g.fillPoints(pts, true);
   g.lineStyle(4, 0xe8cf8f, alpha);
-  g.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 14);
+  g.strokePoints(pts, true);
 }

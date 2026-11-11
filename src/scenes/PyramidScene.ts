@@ -7,12 +7,12 @@ import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
 
 const PS = 1.1; // карты пирамиды крупнее обычных
 const STEP = 132;
-const DY = 86;
+const DY = 76; // стол в перспективе — ряды ближе
 const BIG = 1.35;
 const FREE_HINTS = 3;
 
@@ -23,6 +23,8 @@ export class PyramidScene extends Phaser.Scene {
   private py!: PyramidGame;
   private sprites: Phaser.GameObjects.Image[] = [];
   private home: { x: number; y: number }[] = [];
+  /** масштаб каждой карты пирамиды: дальние ряды чуть мельче */
+  private hs: number[] = [];
   private wasteSprite!: Phaser.GameObjects.Image;
   private stockBacks: Phaser.GameObjects.Image[] = [];
   private stockEmpty!: Phaser.GameObjects.Graphics;
@@ -47,6 +49,7 @@ export class PyramidScene extends Phaser.Scene {
     this.ctx = levelCtx('Pyramid', data);
     this.sprites = [];
     this.home = [];
+    this.hs = [];
     this.stockBacks = [];
     this.selected = null;
     this.hintsLeft = FREE_HINTS;
@@ -78,10 +81,12 @@ export class PyramidScene extends Phaser.Scene {
     for (let i = 0; i < PYRAMID_SIZE; i++) {
       const r = rowOfPyramid(i);
       const c = i - (r * (r + 1)) / 2;
-      const x = W / 2 + (c - r / 2) * STEP;
+      const k = persp.s(top + r * DY + (CARD_H * PS) / 2);
+      const x = W / 2 + (c - r / 2) * STEP * k;
       const y = top + r * DY + (CARD_H * PS) / 2;
       this.home.push({ x, y });
-      const s = this.add.image(W / 2, top - 200, cardKey(this.deal.pyramid[i])).setScale(CARD_TEX_SCALE * PS).setDepth(10 + i).setAlpha(0).setAngle(tableAngle(i * 5 + ctx.level));
+      this.hs.push(k);
+      const s = this.add.image(W / 2, top - 200, cardKey(this.deal.pyramid[i])).setScale(CARD_TEX_SCALE * PS * k).setDepth(10 + i).setAlpha(0).setAngle(tableAngle(i * 5 + ctx.level));
       cardInteractive(s);
       s.on('pointerdown', () => this.tapSpot(i));
       this.sprites.push(s);
@@ -235,7 +240,7 @@ export class PyramidScene extends Phaser.Scene {
       this.tweens.killTweensOf(s);
       const card = this.py.pyramid[i];
       s.setVisible(!!card).setAlpha(1).clearTint();
-      s.setPosition(this.home[i].x, this.home[i].y).setScale(CARD_TEX_SCALE * PS);
+      s.setPosition(this.home[i].x, this.home[i].y).setScale(CARD_TEX_SCALE * PS * this.hs[i]);
     }
     this.tweens.killTweensOf(this.wasteSprite);
     const top = this.py.cardAt('waste');

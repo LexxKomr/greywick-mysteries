@@ -9,11 +9,11 @@ import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, txt } from '../ui/widgets';
 
 const STEP = 106; // шаг карт по горизонтали
-const DY = 90; // шаг рядов по вертикали
+const DY = 80; // шаг рядов по вертикали (стол в перспективе — ряды ближе)
 const BIG = 1.5; // колода и сброс крупнее карт пиков
 
 export class GameScene extends Phaser.Scene {
@@ -25,6 +25,8 @@ export class GameScene extends Phaser.Scene {
   private sprites: Phaser.GameObjects.Image[] = [];
   private faceUp: boolean[] = [];
   private home: { x: number; y: number }[] = [];
+  /** масштаб каждой карты пиков: дальние ряды чуть мельче */
+  private hs: number[] = [];
   private stockBacks: Phaser.GameObjects.Image[] = [];
   private stockCount!: Phaser.GameObjects.Text;
   private stockEmpty!: Phaser.GameObjects.Graphics;
@@ -50,6 +52,7 @@ export class GameScene extends Phaser.Scene {
     this.sprites = [];
     this.faceUp = [];
     this.home = [];
+    this.hs = [];
     this.stockBacks = [];
     this.flyDepth = 200;
   }
@@ -126,10 +129,12 @@ export class GameScene extends Phaser.Scene {
       else if (row === 1) x = x0 + STEP + Math.floor((i - 3) / 2) * 3 * STEP + ((i - 3) % 2) * STEP;
       else x = x0 + 1.5 * STEP + i * 3 * STEP;
       const y = top + row * DY + CARD_H / 2;
-      this.home.push({ x, y });
+      this.home.push({ x: persp.x(x, y), y });
+      this.hs.push(persp.s(y));
+      x = persp.x(x, y);
       const open = this.tp.isOpen(i);
       this.faceUp.push(open);
-      const s = this.add.image(this.stockPos.x, this.stockPos.y, 'card_back').setScale(CARD_TEX_SCALE).setDepth(i).setAngle(tableAngle(i * 7 + this.ctx.level));
+      const s = this.add.image(this.stockPos.x, this.stockPos.y, 'card_back').setScale(CARD_TEX_SCALE * this.hs[i]).setDepth(i).setAngle(tableAngle(i * 7 + this.ctx.level));
       cardInteractive(s);
       s.on('pointerdown', () => this.tapCard(i));
       this.sprites.push(s);
@@ -257,7 +262,7 @@ export class GameScene extends Phaser.Scene {
       const open = this.tp.isOpen(i);
       this.faceUp[i] = open;
       s.setTexture(open ? cardKey(card) : 'card_back');
-      s.setPosition(this.home[i].x, this.home[i].y).setScale(CARD_TEX_SCALE).setDepth(i);
+      s.setPosition(this.home[i].x, this.home[i].y).setScale(CARD_TEX_SCALE * this.hs[i]).setDepth(i);
       cardInteractive(s);
     }
     this.setWaste();
