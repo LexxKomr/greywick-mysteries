@@ -2,7 +2,7 @@
 
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
-import { dealForDaily, dealForLevel, mulberry32 } from '../logic/generator';
+import { dealForBlock, dealForDaily, dealForLevel, mulberry32 } from '../logic/generator';
 import { Deal, Game, TABLEAU_SIZE, makeBonusCards, rowOf, starsFor } from '../logic/tripeaks';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
@@ -54,7 +54,10 @@ export class GameScene extends Phaser.Scene {
   create(): void {
     fadeIn(this);
     const ctx = this.ctx;
-    this.deal = ctx.mode === 'case' ? dealForLevel(ctx.caseData!.number, ctx.level, ctx.total) : dealForDaily();
+    const spec = ctx.caseData?.levels?.[ctx.level - 1];
+    if (ctx.mode !== 'case') this.deal = dealForDaily();
+    else if (spec?.game === 'tripeaks') this.deal = dealForBlock(ctx.caseData!.number, ctx.level, spec.difficulty);
+    else this.deal = dealForLevel(ctx.caseData!.number, ctx.level, ctx.total); // пасьянс этой партии ещё не готов
     this.tp = new Game(this.deal);
     this.rng = mulberry32(Date.now() & 0xffffff);
     (window as unknown as { __tp: unknown }).__tp = { game: this.tp, deal: this.deal, scene: this };

@@ -57,8 +57,12 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
   if (shade > 0) {
     // лёгкое затемнение под картами (для пёстрых столов)
     const sh = scene.add.graphics();
+    const y0 = H * 0.3;
+    const y1 = H * 0.5;
+    sh.fillGradientStyle(0x0a1014, 0x0a1014, 0x0a1014, 0x0a1014, 0, 0, shade, shade);
+    sh.fillRect(0, y0, W, y1 - y0);
     sh.fillStyle(0x0a1014, shade);
-    sh.fillRect(0, 0, W, H);
+    sh.fillRect(0, y1, W, H - y1);
   }
 
   const g = scene.add.graphics().setDepth(400);

@@ -18,6 +18,14 @@ export interface Suspect {
   portrait: string;
 }
 
+export type GameKind = 'tripeaks' | 'pyramid' | 'klondike' | 'freecell';
+
+export interface LevelSpec {
+  game: GameKind;
+  /** трудность внутри блока: 1…3 */
+  difficulty: number;
+}
+
 export interface CaseData {
   id: string;
   number: number;
@@ -30,6 +38,8 @@ export interface CaseData {
   culprit: string;
   wrong: Record<string, string[]>;
   ending: string[];
+  /** вид пасьянса для каждой партии (по номеру улики) */
+  levels: LevelSpec[];
 }
 
 const files = import.meta.glob('../data/cases/*.json', { eager: true, import: 'default' }) as Record<string, unknown>;

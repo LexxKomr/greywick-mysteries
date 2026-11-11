@@ -194,5 +194,55 @@
     "Через две недели на маяке зажгли огонь, и новый смотритель, молодой и неразговорчивый, записал в журнал первую ночь. Эдит поставила «Лоцию южного побережья» на полку, на её законное место, а закладку Сайласа оставила себе.",
     "Потом она заварила чай и впервые за неделю уснула, не думая об обрыве.",
     "А в понедельник утром в библиотеку пришла горничная из «Гранд-Альбиона» и, теребя фартук, спросила, нельзя ли поговорить с мисс Вэйл наедине."
+  ],
+  "levels": [
+    {
+      "game": "tripeaks",
+      "difficulty": 1
+    },
+    {
+      "game": "tripeaks",
+      "difficulty": 2
+    },
+    {
+      "game": "tripeaks",
+      "difficulty": 3
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 1
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 2
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 3
+    },
+    {
+      "game": "klondike",
+      "difficulty": 1
+    },
+    {
+      "game": "klondike",
+      "difficulty": 2
+    },
+    {
+      "game": "klondike",
+      "difficulty": 3
+    },
+    {
+      "game": "freecell",
+      "difficulty": 1
+    },
+    {
+      "game": "freecell",
+      "difficulty": 2
+    },
+    {
+      "game": "freecell",
+      "difficulty": 3
+    }
   ]
 }

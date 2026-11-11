@@ -166,6 +166,13 @@ export function dealForLevel(caseNumber: number, level: number, total = 12): Dea
   return generateRatedDeal(caseNumber * 1000 + level, targetForLevel(level, total));
 }
 
+/** Трудность 1…3 внутри блока дела → доля побед бота-новичка. */
+export const TRIPEAKS_TARGETS = [0.95, 0.85, 0.75];
+
+export function dealForBlock(caseNumber: number, level: number, difficulty: number): Deal {
+  return generateRatedDeal(caseNumber * 1000 + level, TRIPEAKS_TARGETS[Math.max(0, Math.min(2, difficulty - 1))]);
+}
+
 /** Сид партии дня: из даты. */
 export function dailySeed(date = new Date()): number {
   return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();

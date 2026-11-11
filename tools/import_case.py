@@ -22,6 +22,8 @@ META = {
             {'id': 'burke', 'name': 'Томми Берк', 'short': 'Томми Берк', 'role': 'Рыбак', 'match': 'БЕРК'},
         ],
         'culprit': 'marsh',
+        # вид пасьянса и трудность (1-3) для каждой партии: 4 блока по 3 улики
+        'levels': [(g, d) for g in ('tripeaks', 'pyramid', 'klondike', 'freecell') for d in (1, 2, 3)],
     },
 }
 
@@ -41,6 +43,7 @@ def main(n):
         'id': f'case{n:02d}', 'number': n, 'title': meta['title'], 'place': meta['place'],
         'intro': [], 'clues': [], 'accuse': [], 'suspects': [], 'culprit': meta['culprit'],
         'wrong': {}, 'ending': [],
+        'levels': [{'game': g, 'difficulty': d} for g, d in meta['levels']],
     }
     for s in meta['suspects']:
         case['suspects'].append({'id': s['id'], 'name': s['name'], 'short': s['short'], 'role': s['role'],
