@@ -1,3 +1,5 @@
 {
-  "_todo": "TODO: English interface. Keys missing here fall back to ru.json."
+  "_todo": "TODO: English interface. Keys missing here fall back to ru.json.",
+  "ranks": "A,2,3,4,5,6,7,8,9,10,J,Q,K",
+  "joker": "Joker"
 }

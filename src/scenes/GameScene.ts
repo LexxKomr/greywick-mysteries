@@ -46,6 +46,8 @@ export class GameScene extends Phaser.Scene {
   private finished = false;
   private adBusy = false;
   private flyDepth = 200;
+  /** партия уже была выиграна раньше: играем заново ради звёзд */
+  private replay = false;
 
   constructor() {
     super('Game');
@@ -57,6 +59,7 @@ export class GameScene extends Phaser.Scene {
     this.level = data.level ?? 1;
     this.finished = false;
     this.adBusy = false;
+    this.replay = !!this.caseData && save.progress(this.caseData.id, this.caseData.clues.length).stars[this.level - 1] > 0;
     this.sprites = [];
     this.faceUp = [];
     this.home = [];
@@ -416,8 +419,22 @@ export class GameScene extends Phaser.Scene {
 
     if (this.mode === 'case') {
       const c = this.caseData!;
-      save.winLevel(c.id, this.level, stars, c.clues.length);
-      this.time.delayedCall(1100, () => this.scene.start('Clue', { caseId: c.id, index: this.level - 1, isNew: true, stars }));
+      const total = c.clues.length;
+      const before = save.progress(c.id, total).stars[this.level - 1];
+      save.winLevel(c.id, this.level, stars, total);
+      if (!this.replay) {
+        this.time.delayedCall(1100, () => this.scene.start('Clue', { caseId: c.id, index: this.level - 1, isNew: true, stars }));
+      } else {
+        // переигрывали ради звёзд: показываем результат и возвращаемся к доске
+        this.time.delayedCall(900, () => {
+          banner.destroy();
+          const text = stars > before ? t('game.replayBetter') : t('game.replaySame');
+          showDialog(this, t('game.won'), text, [{ label: t('game.toBoard'), style: 'primary', onClick: () => void toMenuAfterGame(this, 'Board', { caseId: c.id, highlight: this.level - 1 }) }], (cont, y) => {
+            cont.add(starsRow(this, W / 2, y, stars, 44));
+            return y + 80;
+          });
+        });
+      }
     } else {
       save.winDaily(dailySeed(), stars);
       this.time.delayedCall(900, () => {

@@ -4,7 +4,9 @@ import Phaser from 'phaser';
 import { C, H, W } from '../config';
 import { getCase } from '../services/cases';
 import { t } from '../services/i18n';
+import { save } from '../services/save';
 import { sfx } from '../services/sfx';
+import { startLevel } from '../flow';
 import { ScrollArea, addBackground, fadeIn, makeButton, panel, ribbon, starsRow, txt } from '../ui/widgets';
 
 interface ClueData {
@@ -30,11 +32,10 @@ export class ClueScene extends Phaser.Scene {
     let y = 96;
     ribbon(this, W / 2, y, 760, 110, data.isNew ? t('clue.found') : t('clue.number', { n: data.index + 1, total }), 60);
     y += 90;
-    if (data.isNew) {
-      sfx.clue();
-      starsRow(this, W / 2, y + 60, data.stars ?? 1, 44);
-      y += 130;
-    }
+    const stars = data.isNew ? (data.stars ?? 1) : save.progress(c.id, total).stars[data.index];
+    if (data.isNew) sfx.clue();
+    starsRow(this, W / 2, y + 60, stars, 44);
+    y += 130;
 
     // карточка с предметом
     const cardH = 300;
@@ -71,8 +72,13 @@ export class ClueScene extends Phaser.Scene {
     area.addParagraphs(clue.text, 46);
     area.addSpace(20);
 
-    makeButton(this, W / 2, H - 112, 700, 150, data.isNew ? t('clue.toBoard') : t('clue.back'), () => {
-      this.scene.start('Board', { caseId: c.id, from: data.from, highlight: data.isNew ? data.index : undefined });
-    }, 'primary', 60);
+    const toBoard = () => this.scene.start('Board', { caseId: c.id, from: data.from, highlight: data.isNew ? data.index : undefined });
+    if (data.isNew) {
+      makeButton(this, W / 2, H - 112, 700, 150, t('clue.toBoard'), toBoard, 'primary', 60);
+    } else {
+      // пройденную партию можно переиграть ради звёзд
+      makeButton(this, W / 2 - 250, H - 112, 480, 140, t('clue.replay'), () => void startLevel(this, c, data.index + 1), 'paper', 46);
+      makeButton(this, W / 2 + 250, H - 112, 480, 140, t('clue.back'), toBoard, 'primary', 46);
+    }
   }
 }

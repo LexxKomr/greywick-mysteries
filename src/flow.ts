@@ -24,13 +24,13 @@ export async function startDaily(scene: Phaser.Scene): Promise<void> {
   scene.scene.start('Game', { mode: 'daily' });
 }
 
-/** Выход в меню после партии дня: тоже подходящее место для рекламы. */
-export async function toMenuAfterGame(scene: Phaser.Scene): Promise<void> {
+/** Выход после партии (в меню или к доске): тоже подходящее место для рекламы. */
+export async function toMenuAfterGame(scene: Phaser.Scene, key = 'Menu', data?: object): Promise<void> {
   if (switching) return;
   switching = true;
   await ads.interstitialIfDue();
   switching = false;
-  scene.scene.start('Menu');
+  scene.scene.start(key, data);
 }
 
 /** Следующий шаг дела: вступление → партии → выбор виновного → развязка. */

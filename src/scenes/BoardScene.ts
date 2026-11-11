@@ -7,7 +7,7 @@ import { caseState, getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
-import { ScrollArea, addBackground, drawBack, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
+import { ScrollArea, addBackground, drawBack, drawStar, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
 
 interface BoardData {
   caseId: string;
@@ -65,12 +65,12 @@ export class BoardScene extends Phaser.Scene {
       const row = Math.floor(i / 2);
       const cx = 20 + CELL_W / 2 + col * (CELL_W + 20);
       const cy = 20 + CELL_H / 2 + row * (CELL_H + 24);
-      holder.add(this.makeNote(c.id, i, cx, cy, stars[i] > 0, c.clues[i].title, c.clues[i].image, area, data));
+      holder.add(this.makeNote(c.id, i, cx, cy, stars[i], c.clues[i].title, c.clues[i].image, area, data));
     }
     area.add(holder, rows * (CELL_H + 24) + 30);
 
     // низ: сколько найдено и что делать дальше
-    txt(this, W / 2, H - 252, t('board.found', { found, total }) + (found > 0 ? '  ·  ' + t('board.hint') : ''), 34, C.paperLight);
+    txt(this, W / 2, H - 252, t('board.found', { found, total }) + (found > 0 ? '\n' + t('board.hint') : ''), 32, C.paperLight, { spacing: 4 });
     const label = state === 'closed' ? t('board.ending') : state === 'accuse' ? t('board.accuse') : t('board.continue');
     makeButton(this, W / 2, H - 130, 900, 150, label, () => {
       if (data.from === 'Accuse' && state === 'accuse') this.scene.start('Accuse', { caseId: c.id });
@@ -78,7 +78,8 @@ export class BoardScene extends Phaser.Scene {
     }, 'primary', 56);
   }
 
-  private makeNote(caseId: string, index: number, cx: number, cy: number, found: boolean, title: string, image: string, area: ScrollArea, data: BoardData): Phaser.GameObjects.Container {
+  private makeNote(caseId: string, index: number, cx: number, cy: number, starCount: number, title: string, image: string, area: ScrollArea, data: BoardData): Phaser.GameObjects.Container {
+    const found = starCount > 0;
     const cont = this.add.container(cx, cy);
     const g = this.add.graphics();
     const w = CELL_W - 30;
@@ -100,7 +101,8 @@ export class BoardScene extends Phaser.Scene {
     cont.setAngle(((index * 37) % 5) - 2);
 
     if (found) {
-      cont.add(this.add.image(0, -38, image).setDisplaySize(176, 176));
+      for (let k = 0; k < 3; k++) drawStar(g, (k - 1) * 46, -h / 2 + 44, 17, k < starCount);
+      cont.add(this.add.image(0, -18, image).setDisplaySize(150, 150));
       cont.add(txt(this, 0, 66, t('board.clue', { n: index + 1 }), 28, C.inkSoft, { italic: true }));
       const tt = txt(this, 0, 110, title, 36, C.wine, { head: true, wrap: w - 36, spacing: -2 });
       if (tt.height > 96) tt.setScale(96 / tt.height);
