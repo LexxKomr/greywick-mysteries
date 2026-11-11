@@ -2,14 +2,14 @@
 
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
-import { KDest, KSource, KlondikeGame, klondikeStars } from '../logic/klondike';
+import { KDest, KSource, KlondikeGame, klondikeStars, solveKlondikeFrom } from '../logic/klondike';
 import { klondikeSeed } from '../logic/seeds';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
 const CS = 1.35; // карты крупнее: столбиков всего семь
@@ -32,6 +32,8 @@ export class KlondikeScene extends Phaser.Scene {
   private tabBottom = 0;
   private hintsLeft = FREE_HINTS;
   private finished = false;
+  /** «проверь тупик» после хода: окно «Ходов больше нет» появляется само */
+  private checkDead: (delay?: number) => void = () => {};
   private busy = false;
 
   constructor() {
@@ -53,6 +55,7 @@ export class KlondikeScene extends Phaser.Scene {
     (window as unknown as { __kl: unknown }).__kl = { game: this.kg, scene: this };
 
     this.ui = buildTable(this, 'table_tearoom', ctx, () => !this.finished && exitDialog(this, ctx), 0.5, 0);
+    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.busy, dead: () => this.isDead(), onDead: () => this.onStuck() });
 
     this.topY = STRIP_H + 26 + CH / 2;
     this.tabY = this.topY + CH + 34;
@@ -186,8 +189,14 @@ export class KlondikeScene extends Phaser.Scene {
       });
       return;
     }
-    if (kg.stuck) this.time.delayedCall(700, () => kg.stuck && !this.finished && this.onStuck());
+    this.checkDead();
   }
+
+  /** Выиграть уже нельзя: полезных ходов нет совсем, или решатель перебрал все варианты. */
+  private isDead(): boolean {
+    return this.kg.stuck || solveKlondikeFrom(this.kg, 3000).result === false;
+  }
+
 
   private onWin(): void {
     if (this.finished) return;
@@ -197,11 +206,18 @@ export class KlondikeScene extends Phaser.Scene {
   }
 
   private onStuck(): void {
-    lostDialog(this, this.ctx, t('klondike.stuckText'), {
-      label: t('game.undoMove'),
-      style: 'primary',
-      onClick: () => this.tapUndo(),
-    });
+    lostDialog(this, this.ctx, t('game.deadTextNoHelp'), { undo: this.kg.canUndo ? () => this.undoToLive() : undefined });
+  }
+
+  /** «Отменить ходы»: откатываемся, пока снова можно выиграть. */
+  private undoToLive(): void {
+    for (let n = 0; n < 60 && this.kg.canUndo; n++) {
+      this.kg.undo();
+      if (!this.isDead()) break;
+    }
+    sfx.draw();
+    this.sync();
+    this.checkDead();
   }
 
   // ---------- помощники ----------
@@ -218,6 +234,12 @@ export class KlondikeScene extends Phaser.Scene {
 
   private async tapHint(): Promise<void> {
     if (this.finished || this.busy) return;
+    // сначала решатель: если выиграть уже нельзя, подсказку не тратим, а сразу говорим об этом
+    const plan = solveKlondikeFrom(this.kg, 15_000);
+    if (plan.result === false || this.kg.stuck) {
+      this.onStuck();
+      return;
+    }
     if (this.hintsLeft > 0) {
       this.hintsLeft--;
     } else {
@@ -228,7 +250,9 @@ export class KlondikeScene extends Phaser.Scene {
     }
     this.refreshHud();
     sfx.clue();
-    const moves = this.kg.usefulMoves().sort((a, b) => b.weight - a.weight);
+    const f = plan.first;
+    if (f?.type === 'draw') return this.hintStock();
+    const moves = f ? [f] : this.kg.usefulMoves().sort((a, b) => b.weight - a.weight);
     if (!moves.length) {
       // полезных ходов на столе нет — подсказываем колоду
       const top = this.kg.stock[this.kg.stock.length - 1];
@@ -244,5 +268,12 @@ export class KlondikeScene extends Phaser.Scene {
       if (pile.length) ids.push(cardId(pile[pile.length - 1]));
     }
     this.layer.pulse(ids);
+  }
+
+  /** Подсказка «возьмите карту из колоды» (или переверните её). */
+  private hintStock(): void {
+    const top = this.kg.stock[this.kg.stock.length - 1];
+    if (top) this.layer.pulse([cardId(top)]);
+    else toast(this, t('klondike.hintRecycle'));
   }
 }

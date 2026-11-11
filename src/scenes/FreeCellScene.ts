@@ -2,14 +2,14 @@
 
 import Phaser from 'phaser';
 import { H, W } from '../config';
-import { FSource, FreeCellGame, freecellStars } from '../logic/freecell';
+import { FSource, FreeCellGame, freecellStars, freecellDead } from '../logic/freecell';
 import { freecellSeed } from '../logic/seeds';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
 import { fadeIn } from '../ui/widgets';
 
 const CS = 1.2;
@@ -32,6 +32,8 @@ export class FreeCellScene extends Phaser.Scene {
   private tabBottom = 0;
   private hintsLeft = FREE_HINTS;
   private finished = false;
+  /** «проверь тупик» после хода: окно «Ходов больше нет» появляется само */
+  private checkDead: (delay?: number) => void = () => {};
   private busy = false;
 
   constructor() {
@@ -53,6 +55,7 @@ export class FreeCellScene extends Phaser.Scene {
     (window as unknown as { __fc: unknown }).__fc = { game: this.fc, scene: this };
 
     this.ui = buildTable(this, 'table_lighthouse', ctx, () => !this.finished && exitDialog(this, ctx), 0.5, 0);
+    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.busy, dead: () => this.isDead(), onDead: () => this.onStuck() });
 
     this.topY = STRIP_H + 26 + CH / 2;
     this.tabY = this.topY + CH + 34;
@@ -151,8 +154,14 @@ export class FreeCellScene extends Phaser.Scene {
       return;
     }
     this.refreshHud();
-    if (fc.stuck) this.time.delayedCall(700, () => fc.stuck && !this.finished && this.onStuck());
+    this.checkDead();
   }
+
+  /** Выиграть уже нельзя: ходов нет, или решатель перебрал все варианты. */
+  private isDead(): boolean {
+    return this.fc.stuck || freecellDead(this.fc, 4000);
+  }
+
 
   private onWin(): void {
     if (this.finished) return;
@@ -161,11 +170,18 @@ export class FreeCellScene extends Phaser.Scene {
   }
 
   private onStuck(): void {
-    lostDialog(this, this.ctx, t('klondike.stuckText'), {
-      label: t('game.undoMove'),
-      style: 'primary',
-      onClick: () => this.tapUndo(),
-    });
+    lostDialog(this, this.ctx, t('game.deadTextNoHelp'), { undo: this.fc.canUndo ? () => this.undoToLive() : undefined });
+  }
+
+  /** «Отменить ходы»: откатываемся, пока снова можно выиграть. */
+  private undoToLive(): void {
+    for (let n = 0; n < 60 && this.fc.canUndo; n++) {
+      this.fc.undo();
+      if (!this.isDead()) break;
+    }
+    sfx.draw();
+    this.sync();
+    this.checkDead();
   }
 
   // ---------- помощники ----------
@@ -182,6 +198,11 @@ export class FreeCellScene extends Phaser.Scene {
 
   private async tapHint(): Promise<void> {
     if (this.finished || this.busy) return;
+    // если выиграть уже нельзя, подсказку не тратим, а сразу говорим об этом
+    if (this.isDead()) {
+      this.onStuck();
+      return;
+    }
     if (this.hintsLeft > 0) {
       this.hintsLeft--;
     } else {

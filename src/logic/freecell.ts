@@ -384,3 +384,13 @@ export function solveFrom(game: FreeCellGame, nodeLimit: number): FreeCellSoluti
   }
   return { solved: false, nodes, length: 0 };
 }
+
+/**
+ * Тупик: решатель перебрал все положения и победы нет (не просто кончился лимит).
+ * Ходы одной картой покрывают и переносы стопок, поэтому ответ «тупик» точный.
+ */
+export function freecellDead(game: FreeCellGame, nodeLimit = 4000): boolean {
+  if (game.won) return false;
+  const r = solveFrom(game, nodeLimit);
+  return !r.solved && r.nodes < nodeLimit;
+}

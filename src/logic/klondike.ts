@@ -295,3 +295,115 @@ export function replayKlondike(seed: number, moves: KMove[]): boolean {
   }
   return g.won;
 }
+
+/** Первый ход найденного решения: перенос карты или нажатие на колоду. */
+export type KlondikeFirst = { type: 'move'; from: KSource; to: KDest } | { type: 'draw' };
+
+/**
+ * Можно ли ещё выиграть с текущего положения. Колоду можно проходить сколько угодно,
+ * поэтому любая карта колоды или сброса рано или поздно окажется сверху: решатель считает
+ * их одним «запасом» и не перебирает нажатия на колоду. Когда все карты стола открыты,
+ * пасьянс сходится сам — это победа.
+ * result: true — да, false — точно нет, null — не хватило лимита.
+ */
+export function solveKlondikeFrom(src: KlondikeGame, nodeLimit = 30_000): { result: boolean | null; first?: KlondikeFirst } {
+  type St = { tab: TCard[][]; talon: Card[]; found: number[] };
+  const id = (c: Card) => (c.rank - 1) * 4 + c.suit;
+  const keyOf = (s: St) => s.tab.map((p) => p.map((c) => (c.up ? '' : '~') + id(c)).join('.')).join('/') + '|' + s.talon.map(id).join('.') + '|' + s.found.join('');
+  const fitsCol = (s: St, c: Card, col: number) => {
+    const p = s.tab[col];
+    if (!p.length) return c.rank === 13;
+    const top = p[p.length - 1];
+    return top.up && top.rank === c.rank + 1 && isRed(top.suit) !== isRed(c.suit);
+  };
+  // «запас» — все карты колоды и сброса; порядок держим постоянным, чтобы ключ был стабильным
+  const start: St = {
+    tab: src.tableau.map((p) => p.map((c) => ({ ...c }))),
+    talon: src.waste.slice().concat(src.stock.slice().reverse()),
+    found: src.found.slice(),
+  };
+  const seen = new Set<string>();
+  let nodes = 0;
+  let overflow = false;
+  type Mv = { kind: 'talon'; card: Card; to: KDest } | { kind: 'tab'; col: number; index: number; to: KDest };
+  let firstMv: Mv | undefined;
+
+  const rec = (s: St, depth: number): boolean => {
+    if (s.found[0] + s.found[1] + s.found[2] + s.found[3] === 52) return true;
+    // всё открыто: с бесконечными проходами колоды пасьянс сходится
+    if (!s.tab.some((p) => p.some((c) => !c.up))) return true;
+    const k = keyOf(s);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    if (++nodes > nodeLimit) {
+      overflow = true;
+      return false;
+    }
+    const moves: { mv: Mv; w: number }[] = [];
+    for (let col = 0; col < 7; col++) {
+      const p = s.tab[col];
+      if (!p.length) continue;
+      const top = p[p.length - 1];
+      if (s.found[top.suit] === top.rank - 1) moves.push({ mv: { kind: 'tab', col, index: p.length - 1, to: { type: 'found' } }, w: 5 });
+      const firstUp = p.findIndex((c) => c.up);
+      for (let i = firstUp; i < p.length; i++) {
+        for (let d = 0; d < 7; d++) {
+          if (d === col || !fitsCol(s, p[i], d)) continue;
+          if (i === 0 && s.tab[d].length === 0) continue; // король с основания — в пустой столбик бессмысленно
+          moves.push({ mv: { kind: 'tab', col, index: i, to: { type: 'tab', col: d } }, w: i === firstUp && i > 0 ? 4 : i === firstUp ? 1 : 0 });
+        }
+      }
+    }
+    const tried = new Set<number>();
+    for (const c of s.talon) {
+      if (tried.has(id(c))) continue;
+      tried.add(id(c));
+      if (s.found[c.suit] === c.rank - 1) moves.push({ mv: { kind: 'talon', card: c, to: { type: 'found' } }, w: 5 });
+      let emptyDone = false;
+      for (let d = 0; d < 7; d++) {
+        if (!fitsCol(s, c, d)) continue;
+        if (s.tab[d].length === 0) {
+          if (emptyDone) continue;
+          emptyDone = true;
+        }
+        moves.push({ mv: { kind: 'talon', card: c, to: { type: 'tab', col: d } }, w: 3 });
+      }
+    }
+    moves.sort((a, b) => b.w - a.w);
+    for (const { mv } of moves) {
+      const n: St = { tab: s.tab.map((p) => p.slice()), talon: s.talon.slice(), found: s.found.slice() };
+      let cards: Card[];
+      if (mv.kind === 'talon') {
+        n.talon.splice(n.talon.findIndex((c) => id(c) === id(mv.card)), 1);
+        cards = [mv.card];
+      } else {
+        const p = n.tab[mv.col];
+        cards = p.splice(mv.index);
+        if (p.length && !p[p.length - 1].up) p[p.length - 1] = { ...p[p.length - 1], up: true };
+      }
+      if (mv.to.type === 'found') n.found[cards[0].suit]++;
+      else {
+        const dst = n.tab[mv.to.col];
+        for (const c of cards) dst.push({ rank: c.rank, suit: c.suit, up: true });
+      }
+      if (rec(n, depth + 1)) {
+        if (depth === 0) firstMv = mv;
+        return true;
+      }
+      if (overflow) return false;
+    }
+    return false;
+  };
+
+  const ok = rec(start, 0);
+  let first: KlondikeFirst | undefined;
+  if (ok && firstMv) {
+    if (firstMv.kind === 'tab') first = { type: 'move', from: { type: 'tab', col: firstMv.col, index: firstMv.index }, to: firstMv.to };
+    else {
+      const top = src.waste[src.waste.length - 1];
+      const card = firstMv.card;
+      first = top && top.rank === card.rank && top.suit === card.suit ? { type: 'move', from: { type: 'waste' }, to: firstMv.to } : { type: 'draw' };
+    }
+  } else if (ok && src.stock.length + src.waste.length > 0) first = { type: 'draw' };
+  return { result: ok ? true : overflow ? null : false, first };
+}

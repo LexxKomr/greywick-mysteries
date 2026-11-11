@@ -2,12 +2,12 @@
 
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
-import { PYRAMID_SIZE, PYRAMID_TARGETS, PyramidDeal, PyramidGame, Spot, generateRatedPyramid, pyramidStars, rowOfPyramid } from '../logic/pyramid';
+import { PYRAMID_SIZE, PYRAMID_TARGETS, PyramidDeal, PyramidGame, Spot, generateRatedPyramid, pyramidStars, rowOfPyramid, solvePyramidFrom } from '../logic/pyramid';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardKey } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
 
 const PS = 1.2; // карты пирамиды крупнее обычных
@@ -35,6 +35,8 @@ export class PyramidScene extends Phaser.Scene {
   private selected: Spot | null = null;
   private hintsLeft = FREE_HINTS;
   private finished = false;
+  /** «проверь тупик» после хода: окно «Ходов больше нет» появляется само */
+  private checkDead: (delay?: number) => void = () => {};
   private adBusy = false;
 
   constructor() {
@@ -63,6 +65,7 @@ export class PyramidScene extends Phaser.Scene {
 
     // клеёнка на кухне пёстрая — под картами слегка затемняем
     this.ui = buildTable(this, 'table_kitchen', ctx, () => !this.finished && exitDialog(this, ctx), 0.42);
+    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
 
     const top = Math.round(H * 0.265);
     const bottom = top + 6 * DY + CARD_H * PS;
@@ -216,10 +219,14 @@ export class PyramidScene extends Phaser.Scene {
       if (this.finished) return;
       this.finished = true;
       winLevel(this, this.ctx, pyramidStars(this.py.pass));
-    } else if (status === 'lost') {
-      this.time.delayedCall(650, () => this.py.status === 'lost' && !this.finished && this.onLost());
-    }
+    } else this.checkDead();
   }
+
+  /** Выиграть уже нельзя: ходов и проходов нет, или решатель доказал тупик. */
+  private isDead(): boolean {
+    return this.py.status === 'lost' || solvePyramidFrom(this.py, 40_000).result === false;
+  }
+
 
   /** Приводит стол в соответствие с состоянием игры. */
   private sync(): void {
@@ -267,6 +274,13 @@ export class PyramidScene extends Phaser.Scene {
 
   private async tapHint(): Promise<void> {
     if (this.finished || this.adBusy) return;
+    // сначала решатель: если выиграть уже нельзя, подсказку не тратим, а сразу говорим об этом
+    const plan = solvePyramidFrom(this.py, 150_000);
+    if (plan.result === false || this.py.status === 'lost') {
+      this.select(null);
+      this.onLost();
+      return;
+    }
     if (this.hintsLeft > 0) {
       this.hintsLeft--;
     } else {
@@ -277,14 +291,29 @@ export class PyramidScene extends Phaser.Scene {
     }
     this.select(null);
     this.refreshHud();
-    const move = this.py.findRemoval();
-    const targets: Phaser.GameObjects.Image[] = move ? move.map((s) => this.spriteOf(s)) : this.stockBacks.filter((b) => b.visible);
-    for (const s of targets) {
-      s.setTint(0xffd36b);
-      const base = s.scaleX;
-      this.tweens.add({ targets: s, scale: base * 1.12, duration: 220, yoyo: true, repeat: 2, onComplete: () => s.clearTint().setScale(base) });
-    }
     sfx.clue();
+    // ход из найденного решения; если решатель не успел — любой пара/король, иначе колода
+    const first = plan.first ?? this.py.findRemoval() ?? 'draw';
+    if (first !== 'draw') {
+      for (const s of first.map((sp) => this.spriteOf(sp))) {
+        s.setTint(0xffd36b);
+        const base = s.scaleX;
+        this.tweens.add({ targets: s, scale: base * 1.12, duration: 220, yoyo: true, repeat: 2, onComplete: () => s.clearTint().setScale(base) });
+      }
+      return;
+    }
+    if (this.py.stock.length > 0) {
+      const backs = this.stockBacks.filter((b) => b.visible);
+      for (const b of backs) {
+        b.setTint(0xffd36b);
+        const base = b.scaleX;
+        this.tweens.add({ targets: b, scale: base * 1.12, duration: 220, yoyo: true, repeat: 2, onComplete: () => b.clearTint().setScale(base) });
+      }
+    } else {
+      // колода пуста: подсказка — начать новый проход
+      toast(this, t('pyramid.hintRecycle'));
+      this.tweens.add({ targets: this.stockEmpty, alpha: 0.3, duration: 220, yoyo: true, repeat: 2, onComplete: () => this.stockEmpty.setAlpha(1) });
+    }
   }
 
   private async tapPlusPass(): Promise<void> {
@@ -296,21 +325,38 @@ export class PyramidScene extends Phaser.Scene {
     this.py.addPass();
     sfx.clue();
     this.sync();
+    this.checkDead();
   }
 
   private onLost(): void {
-    lostDialog(this, this.ctx, t('pyramid.lostText'), {
-      label: t('game.lostPass'),
-      style: 'primary',
-      onClick: async () => {
-        this.adBusy = true;
-        const ok = await ads.showRewarded();
-        this.adBusy = false;
-        if (ok) {
-          this.py.addPass();
-          this.sync();
-        } else this.onLost();
+    const text = this.py.status === 'lost' ? t('pyramid.lostText') : t('game.deadText');
+    lostDialog(this, this.ctx, text, {
+      extra: {
+        label: t('game.lostPass'),
+        style: 'primary',
+        onClick: async () => {
+          this.adBusy = true;
+          const ok = await ads.showRewarded();
+          this.adBusy = false;
+          if (ok) {
+            this.py.addPass();
+            this.sync();
+            this.checkDead();
+          } else this.onLost();
+        },
       },
+      undo: this.py.canUndo ? () => this.undoToLive() : undefined,
     });
+  }
+
+  /** «Отменить ходы»: откатываемся, пока снова можно выиграть (или пока есть отмены). */
+  private undoToLive(): void {
+    while (this.py.canUndo) {
+      this.py.undo();
+      if (!this.isDead()) break;
+    }
+    sfx.draw();
+    this.sync();
+    this.checkDead();
   }
 }

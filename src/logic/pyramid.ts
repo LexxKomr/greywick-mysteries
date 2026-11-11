@@ -342,19 +342,33 @@ export function generateRatedPyramid(seed: number, target: number, tolerance = 0
 /** Трудность 1…3 внутри блока дела → доля побед бота-новичка. */
 export const PYRAMID_TARGETS = [0.85, 0.7, 0.55];
 
-/**
- * Независимый решатель (для тестов): перебор с запоминанием тупиков.
- * true — решение есть, false — точно нет, null — не хватило лимита.
- */
+/** Первый ход найденного решения: снять карты или нажать на колоду. */
+export type PyramidFirst = Spot[] | 'draw';
+
+/** Независимый решатель с начала раскладки (для тестов). */
 export function solvePyramid(deal: PyramidDeal, nodeLimit = 400_000): boolean | null {
+  return solvePyramidFrom(new PyramidGame(deal, 0), nodeLimit).result;
+}
+
+/**
+ * Решатель с текущего положения партии: перебор с запоминанием тупиков.
+ * result: true — решение есть, false — точно нет, null — не хватило лимита.
+ */
+export function solvePyramidFrom(src: PyramidGame, nodeLimit = 150_000): { result: boolean | null; first?: PyramidFirst } {
   const dead = new Set<string>();
   let nodes = 0;
   let overflow = false;
-  const g = new PyramidGame(deal, 0);
+  let first: PyramidFirst | undefined;
+  const g = new PyramidGame({ pyramid: [], stock: [], solution: [] }, 0);
+  g.pyramid = src.pyramid.slice();
+  g.stock = src.stock.slice();
+  g.waste = src.waste.slice();
+  g.pass = src.pass;
+  g.maxPasses = src.maxPasses;
 
   const key = () => g.pyramid.map((c) => (c ? '1' : '0')).join('') + '|' + g.pass + '|' + g.stock.length + '|' + g.waste.map((c) => c.rank * 4 + c.suit).join(',');
 
-  const rec = (): boolean => {
+  const rec = (depth: number): boolean => {
     if (g.remaining === 0) return true;
     const k = key();
     if (dead.has(k)) return false;
@@ -382,7 +396,10 @@ export function solvePyramid(deal: PyramidDeal, nodeLimit = 400_000): boolean | 
         if (s === 'waste') g.waste.pop();
         else g.pyramid[s] = null;
       }
-      if (rec()) return true;
+      if (rec(depth + 1)) {
+        if (depth === 0) first = o;
+        return true;
+      }
       restore();
       if (overflow) return false;
     }
@@ -393,7 +410,10 @@ export function solvePyramid(deal: PyramidDeal, nodeLimit = 400_000): boolean | 
         g.waste = [];
         g.pass++;
       }
-      if (rec()) return true;
+      if (rec(depth + 1)) {
+        if (depth === 0) first = 'draw';
+        return true;
+      }
       restore();
       if (overflow) return false;
     }
@@ -401,6 +421,6 @@ export function solvePyramid(deal: PyramidDeal, nodeLimit = 400_000): boolean | 
     return false;
   };
 
-  if (rec()) return true;
-  return overflow ? null : false;
+  const ok = rec(0);
+  return { result: ok ? true : overflow ? null : false, first };
 }

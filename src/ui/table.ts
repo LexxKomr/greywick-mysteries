@@ -10,7 +10,7 @@ import { attachThoughts, showIntro, showRules } from './edith';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
-import { DialogButton, drawHome, drawStar, roundButton, showDialog, starsRow, txt } from './widgets';
+import { DialogButton, dialogsOpen, drawHome, drawStar, roundButton, showDialog, starsRow, txt } from './widgets';
 
 export interface LevelData {
   mode: 'case' | 'daily';
@@ -217,12 +217,50 @@ export function restartLevel(scene: Phaser.Scene, ctx: LevelCtx): void {
   scene.scene.restart(ctx.data);
 }
 
-/** Окно «Ходов больше нет»: помощь за рекламу (если есть) или начать заново. */
-export function lostDialog(scene: Phaser.Scene, ctx: LevelCtx, text: string, extra?: DialogButton): void {
+export interface DeadWatch {
+  /** партия кончилась — больше не проверять */
+  stop: () => boolean;
+  /** сейчас нельзя показывать окно (реклама, анимация) — проверить позже */
+  wait: () => boolean;
+  dead: () => boolean;
+  onDead: () => void;
+}
+
+/**
+ * Следит за тупиком: возвращает функцию «проверь после хода». Если в этот момент открыто
+ * другое окно или идёт реклама, проверка повторяется, пока окно не закроется.
+ */
+export function watchDead(scene: Phaser.Scene, w: DeadWatch): (delay?: number) => void {
+  let timer: Phaser.Time.TimerEvent | null = null;
+  const tick = () => {
+    timer = null;
+    if (w.stop()) return;
+    if (w.wait() || dialogsOpen() > 0) {
+      timer = scene.time.delayedCall(1000, tick);
+      return;
+    }
+    if (w.dead()) w.onDead();
+  };
+  return (delay = 650) => {
+    timer?.remove();
+    timer = scene.time.delayedCall(delay, tick);
+  };
+}
+
+export interface LostOptions {
+  /** помощь за рекламу (+5 карт, +1 проход), если она есть в этом пасьянсе */
+  extra?: DialogButton;
+  /** «Отменить ходы»: вернуться туда, откуда ещё можно выиграть */
+  undo?: () => void;
+}
+
+/** Окно «Ходов больше нет»: помощь за рекламу (где есть), отмена ходов, начать заново. */
+export function lostDialog(scene: Phaser.Scene, ctx: LevelCtx, text: string, opts: LostOptions = {}): void {
   sfx.lose();
   const buttons: DialogButton[] = [];
-  if (extra) buttons.push(extra);
-  buttons.push({ label: t('game.restart'), style: extra ? 'paper' : 'primary', onClick: () => restartLevel(scene, ctx) });
+  if (opts.extra) buttons.push(opts.extra);
+  if (opts.undo) buttons.push({ label: t('game.undoMoves'), style: buttons.length ? 'paper' : 'primary', onClick: opts.undo });
+  buttons.push({ label: t('game.restart'), style: buttons.length ? 'paper' : 'primary', onClick: () => restartLevel(scene, ctx) });
   showDialog(scene, t('game.lostTitle'), text, buttons);
 }
 

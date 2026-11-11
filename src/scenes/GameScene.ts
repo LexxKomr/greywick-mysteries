@@ -4,11 +4,12 @@ import Phaser from 'phaser';
 import { C, H, W } from '../config';
 import { dealForBlock, dealForDaily, dealForLevel, mulberry32 } from '../logic/generator';
 import { Deal, Game, TABLEAU_SIZE, makeBonusCards, rowOf, starsFor } from '../logic/tripeaks';
+import { solveTriPeaksFrom } from '../logic/solver';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardKey } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, watchDead, winLevel } from '../ui/table';
 import { fadeIn, txt } from '../ui/widgets';
 
 const STEP = 106; // шаг карт по горизонтали
@@ -33,6 +34,8 @@ export class GameScene extends Phaser.Scene {
   private stockPos = { x: 0, y: 0 };
   private wastePos = { x: 0, y: 0 };
   private finished = false;
+  /** «проверь тупик» после хода: окно «Ходов больше нет» появляется само */
+  private checkDead: (delay?: number) => void = () => {};
   private adBusy = false;
   private flyDepth = 200;
 
@@ -63,6 +66,7 @@ export class GameScene extends Phaser.Scene {
     (window as unknown as { __tp: unknown }).__tp = { game: this.tp, deal: this.deal, scene: this };
 
     this.ui = buildTable(this, 'table_library', ctx, () => !this.finished && exitDialog(this, ctx));
+    this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
 
     // карты лежат на столе: пики от середины экрана, ниже колода, внизу помощники
     const peaksTop = Math.round(H * 0.485);
@@ -232,10 +236,15 @@ export class GameScene extends Phaser.Scene {
       }
     }
     this.refreshHud();
-    const status = this.tp.status;
-    if (status === 'won') this.onWin();
-    else if (status === 'lost') this.time.delayedCall(650, () => this.tp.status === 'lost' && !this.finished && this.onLost());
+    if (this.tp.status === 'won') this.onWin();
+    else this.checkDead();
   }
+
+  /** Выиграть уже нельзя: колода пуста и ходов нет, или решатель доказал тупик. */
+  private isDead(): boolean {
+    return this.tp.status === 'lost' || solveTriPeaksFrom(this.tp, 200_000).result === false;
+  }
+
 
   /** Приводит весь стол в соответствие с состоянием игры (после отмены и помощников). */
   private syncAll(): void {
@@ -305,6 +314,7 @@ export class GameScene extends Phaser.Scene {
     this.wasteSprite.setScale(CARD_TEX_SCALE * BIG * 1.25);
     this.tweens.add({ targets: this.wasteSprite, scale: CARD_TEX_SCALE * BIG, duration: 300, ease: 'Back.easeOut' });
     sfx.clue();
+    this.checkDead();
   }
 
   private async tapPlus5(): Promise<void> {
@@ -321,6 +331,7 @@ export class GameScene extends Phaser.Scene {
     this.syncAll();
     sfx.clue();
     this.tweens.add({ targets: this.stockBacks, scale: CARD_TEX_SCALE * BIG * 1.15, duration: 140, yoyo: true });
+    this.checkDead();
   }
 
   // ---------- конец партии ----------
@@ -332,16 +343,31 @@ export class GameScene extends Phaser.Scene {
   }
 
   private onLost(): void {
-    lostDialog(this, this.ctx, t('game.lostText'), {
-      label: t('game.lostPlus5'),
-      style: 'primary',
-      onClick: async () => {
-        this.adBusy = true;
-        const ok = await ads.showRewarded();
-        this.adBusy = false;
-        if (ok) this.addFive();
-        else this.onLost();
+    const text = this.tp.stock.length === 0 ? t('game.lostText') : t('game.deadText');
+    lostDialog(this, this.ctx, text, {
+      extra: {
+        label: t('game.lostPlus5'),
+        style: 'primary',
+        onClick: async () => {
+          this.adBusy = true;
+          const ok = await ads.showRewarded();
+          this.adBusy = false;
+          if (ok) this.addFive();
+          else this.onLost();
+        },
       },
+      undo: this.tp.canUndo ? () => this.undoToLive() : undefined,
     });
+  }
+
+  /** «Отменить ходы»: откатываемся, пока снова можно выиграть (или пока есть отмены). */
+  private undoToLive(): void {
+    while (this.tp.canUndo) {
+      this.tp.undo();
+      if (!this.isDead()) break;
+    }
+    sfx.draw();
+    this.syncAll();
+    this.checkDead();
   }
 }

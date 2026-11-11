@@ -80,3 +80,50 @@ export function botPlay(deal: Deal, rng: () => number): { won: boolean; stockLef
   }
   return { won: g.status === 'won', stockLeft: g.stockLeft };
 }
+
+export type TriPeaksFirst = number | 'draw';
+
+/**
+ * Можно ли ещё выиграть с текущего положения партии (с учётом джокера и добавленных карт).
+ * result: true — да, false — точно нет, null — не хватило лимита.
+ */
+export function solveTriPeaksFrom(g: Game, nodeLimit = 300_000): { result: boolean | null; first?: TriPeaksFirst } {
+  const ranks = g.tableau.map((c) => (c ? c.rank : 0));
+  const stock = g.stock.map((c) => c.rank);
+  let start = 0;
+  for (let i = 0; i < TABLEAU_SIZE; i++) if (g.tableau[i]) start |= 1 << i;
+  const dead = new Set<number>();
+  let nodes = 0;
+  let overflow = false;
+  let first: TriPeaksFirst | undefined;
+
+  const rec = (mask: number, pos: number, top: number, depth: number): boolean => {
+    if (mask === 0) return true;
+    const key = (mask * 128 + pos) * 16 + top;
+    if (dead.has(key)) return false;
+    if (++nodes > nodeLimit) {
+      overflow = true;
+      return false;
+    }
+    for (let i = 0; i < TABLEAU_SIZE; i++) {
+      if (!(mask & (1 << i))) continue;
+      const cov = COVERS[i];
+      if (cov.length && (mask & (1 << cov[0]) || mask & (1 << cov[1]))) continue;
+      if (!isAdjacent(ranks[i], top)) continue;
+      if (rec(mask & ~(1 << i), pos, ranks[i], depth + 1)) {
+        if (depth === 0) first = i;
+        return true;
+      }
+      if (overflow) return false;
+    }
+    if (pos < stock.length && rec(mask, pos + 1, stock[pos], depth + 1)) {
+      if (depth === 0) first = 'draw';
+      return true;
+    }
+    if (!overflow) dead.add(key);
+    return false;
+  };
+
+  const ok = rec(start, 0, g.top.rank, 0);
+  return { result: ok ? true : overflow ? null : false, first };
+}
