@@ -11,6 +11,7 @@ import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, txt } from '../ui/widgets';
+import { CardDrag } from '../ui/drag';
 
 const STEP = 106; // шаг карт по горизонтали
 const DY = 80; // шаг рядов по вертикали (стол в перспективе — ряды ближе)
@@ -120,6 +121,18 @@ export class GameScene extends Phaser.Scene {
   }
 
   private buildTableau(top: number): void {
+    // карту пика можно перетащить на сброс или просто нажать
+    const drag = new CardDrag<number>(this, {
+      enabled: () => !this.finished && !this.adBusy,
+      pick: (i) => (this.tp.tableau[i] && this.tp.isOpen(i) ? [this.sprites[i]] : null),
+      drop: (i, x, y) => {
+        const near = Math.abs(x - this.wastePos.x) < 150 && Math.abs(y - this.wastePos.y) < 190;
+        if (!near || !this.tp.canPlay(i)) return false;
+        this.tapCard(i);
+        return true;
+      },
+      tap: (i) => this.tapCard(i),
+    });
     const x0 = (W - 9 * STEP) / 2;
     for (let i = 0; i < TABLEAU_SIZE; i++) {
       const row = rowOf(i);
@@ -136,7 +149,7 @@ export class GameScene extends Phaser.Scene {
       this.faceUp.push(open);
       const s = this.add.image(this.stockPos.x, this.stockPos.y, 'card_back').setScale(CARD_TEX_SCALE * this.hs[i]).setDepth(i).setAngle(tableAngle(i * 7 + this.ctx.level));
       cardInteractive(s);
-      s.on('pointerdown', () => this.tapCard(i));
+      drag.add(s, i);
       this.sprites.push(s);
       // раздача: карты разлетаются из колоды
       this.tweens.add({

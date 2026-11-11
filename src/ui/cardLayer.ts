@@ -25,7 +25,8 @@ export class CardLayer {
   private current = new Map<number, Placement>();
   private texScale: number;
 
-  constructor(private scene: Phaser.Scene, scale: number, private origin: { x: number; y: number }, private onTap: (id: number) => void) {
+  /** bind — подключает карту к нажатию и перетаскиванию (см. drag.ts) */
+  constructor(private scene: Phaser.Scene, scale: number, private origin: { x: number; y: number }, private bind: (img: Phaser.GameObjects.Image, id: number) => void) {
     this.texScale = CARD_TEX_SCALE * scale;
   }
 
@@ -34,7 +35,7 @@ export class CardLayer {
     if (!s) {
       s = this.scene.add.image(this.origin.x, this.origin.y, 'card_back').setScale(this.texScale);
       cardInteractive(s);
-      s.on('pointerdown', () => this.onTap(id));
+      this.bind(s, id);
       this.sprites.set(id, s);
       this.faceUp.set(id, false);
     }
@@ -94,6 +95,11 @@ export class CardLayer {
         if (s.scaleY !== sc) s.setScale(s.scaleX, sc);
       }
     }
+  }
+
+  /** Картинка карты (для перетаскивания стопки). */
+  get(id: number): Phaser.GameObjects.Image | undefined {
+    return this.sprites.get(id);
   }
 
   /** Подсветка карт (подсказка). */

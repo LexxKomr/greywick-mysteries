@@ -9,6 +9,7 @@ import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
+import { CardDrag } from '../ui/drag';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
@@ -85,7 +86,13 @@ export class KlondikeScene extends Phaser.Scene {
     const zone = this.add.zone(sx, this.topY, CW + 10, CH + 10).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.tapStock());
 
-    this.layer = new CardLayer(this, CS, { x: sx, y: this.topY }, (id) => this.tapCard(id));
+    const drag = new CardDrag<number>(this, {
+      enabled: () => !this.finished && !this.busy,
+      pick: (id) => this.pickStack(id),
+      drop: (id, x, y) => this.dropStack(id, x, y),
+      tap: (id) => this.tapCard(id),
+    });
+    this.layer = new CardLayer(this, CS, { x: sx, y: this.topY }, (img, id) => drag.add(img, id));
     this.layer.apply(this.places(), true, 14);
 
     this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, icons.undo, () => this.tapUndo());
@@ -160,6 +167,46 @@ export class KlondikeScene extends Phaser.Scene {
     sfx.card(dests[0].type === 'found' ? 3 : 0);
     this.sync();
     this.afterMove();
+  }
+
+  // ---------- перетаскивание ----------
+
+  /** Карта и все карты на ней — поднимаются вместе. */
+  private pickStack(id: number): Phaser.GameObjects.Image[] | null {
+    const src = this.locate(id);
+    if (!src || src === 'stock') return null;
+    const imgs = this.kg.cardsAt(src).map((c) => this.layer.get(cardId(c))!);
+    return imgs.length ? imgs : null;
+  }
+
+  /** Куда показывает точка на столе: ряд домов или ближайший столбик. */
+  private destAt(x: number, y: number): KDest | null {
+    if (Math.abs(y - this.topY) < CH * 0.8) {
+      const right = persp.x(X0 + 3 * STEP, this.topY) + CW / 2 + 20;
+      return x < right ? { type: 'found' } : null;
+    }
+    if (y < this.tabY - CH) return null;
+    let best = -1;
+    let bd = Infinity;
+    for (let c = 0; c < 7; c++) {
+      const d = Math.abs(x - persp.x(X0 + c * STEP, y));
+      if (d < bd) {
+        bd = d;
+        best = c;
+      }
+    }
+    return bd < STEP * 0.75 ? { type: 'tab', col: best } : null;
+  }
+
+  private dropStack(id: number, x: number, y: number): boolean {
+    const src = this.locate(id);
+    const to = this.destAt(x, y);
+    if (!src || src === 'stock' || !to || !this.kg.canMove(src, to)) return false;
+    this.kg.move(src, to);
+    sfx.card(to.type === 'found' ? 3 : 0);
+    this.sync();
+    this.afterMove();
+    return true;
   }
 
   private tapStock(): void {

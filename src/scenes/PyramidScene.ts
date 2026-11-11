@@ -9,6 +9,7 @@ import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
+import { CardDrag } from '../ui/drag';
 
 const PS = 1.1; // карты пирамиды крупнее обычных
 const STEP = 132;
@@ -35,6 +36,7 @@ export class PyramidScene extends Phaser.Scene {
   private stockPos = { x: 0, y: 0 };
   private wastePos = { x: 0, y: 0 };
   private selected: Spot | null = null;
+  private drag!: CardDrag<Spot>;
   private hintsLeft = FREE_HINTS;
   private finished = false;
   /** «проверь тупик» после хода: окно «Ходов больше нет» появляется само */
@@ -77,6 +79,17 @@ export class PyramidScene extends Phaser.Scene {
     this.checkDead = watchDead(this, { stop: () => this.finished, wait: () => this.adBusy, dead: () => this.isDead(), onDead: () => this.onLost() });
 
 
+    // карту можно перетащить на пару (сумма 13) или нажать по очереди на обе
+    this.drag = new CardDrag<Spot>(this, {
+      enabled: () => !this.finished && !this.adBusy,
+      pick: (spot) => {
+        if (!this.py.cardAt(spot)) return null;
+        this.select(null);
+        return [this.spriteOf(spot)];
+      },
+      drop: (spot, x, y) => this.dropOn(spot, x, y),
+      tap: (spot) => this.tapSpot(spot),
+    });
     this.buildDeck();
     for (let i = 0; i < PYRAMID_SIZE; i++) {
       const r = rowOfPyramid(i);
@@ -88,7 +101,7 @@ export class PyramidScene extends Phaser.Scene {
       this.hs.push(k);
       const s = this.add.image(W / 2, top - 200, cardKey(this.deal.pyramid[i])).setScale(CARD_TEX_SCALE * PS * k).setDepth(10 + i).setAlpha(0).setAngle(tableAngle(i * 5 + ctx.level));
       cardInteractive(s);
-      s.on('pointerdown', () => this.tapSpot(i));
+      this.drag.add(s, i);
       this.sprites.push(s);
       this.tweens.add({ targets: s, x, y, alpha: 1, duration: 280, delay: 40 + i * 24, ease: 'Cubic.easeOut' });
     }
@@ -133,7 +146,7 @@ export class PyramidScene extends Phaser.Scene {
     w.strokeRoundedRect(this.wastePos.x - cw / 2, y - ch / 2, cw, ch, 18);
     this.wasteSprite = this.add.image(this.wastePos.x, this.wastePos.y, 'card_back').setScale(CARD_TEX_SCALE * BIG).setDepth(100).setVisible(false);
     cardInteractive(this.wasteSprite);
-    this.wasteSprite.on('pointerdown', () => this.tapSpot('waste'));
+    this.drag.add(this.wasteSprite, 'waste');
 
     this.passText = txt(this, this.wastePos.x + cw / 2 + 24, y, '', 36, C.paperLight, { head: true, ox: 0, align: 'left' });
     this.passText.setShadow(0, 3, '#000000', 8, false, true);
@@ -168,6 +181,31 @@ export class PyramidScene extends Phaser.Scene {
       sfx.click();
       this.select(spot);
     }
+  }
+
+  /** Карту отпустили: король уходит сам, остальным нужна пара с суммой 13 под ними. */
+  private dropOn(spot: Spot, x: number, y: number): boolean {
+    const card = this.py.cardAt(spot);
+    if (!card) return false;
+    if (card.rank === 13) {
+      const home = spot === 'waste' ? this.wastePos : this.home[spot];
+      if (Math.hypot(x - home.x, y - home.y) < 50) return false;
+      this.removeSpots([spot]);
+      return true;
+    }
+    let target: Spot | null = null;
+    let depth = -Infinity;
+    for (const sp of this.py.spots()) {
+      if (sp === spot) continue;
+      const s = this.spriteOf(sp);
+      if (s.depth > depth && Math.abs(x - s.x) < s.displayWidth * 0.42 && Math.abs(y - s.y) < s.displayHeight * 0.42) {
+        target = sp;
+        depth = s.depth;
+      }
+    }
+    if (target === null || !this.py.canRemove([spot, target])) return false;
+    this.removeSpots([spot, target]);
+    return true;
   }
 
   private select(spot: Spot | null): void {

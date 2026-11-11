@@ -2,13 +2,14 @@
 
 import Phaser from 'phaser';
 import { H, W } from '../config';
-import { FSource, FreeCellGame, freecellStars, freecellDead } from '../logic/freecell';
+import { FDest, FSource, FreeCellGame, freecellStars, freecellDead } from '../logic/freecell';
 import { freecellSeed } from '../logic/seeds';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
+import { CardDrag } from '../ui/drag';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn } from '../ui/widgets';
 
@@ -73,7 +74,13 @@ export class FreeCellScene extends Phaser.Scene {
     }
     for (let c = 0; c < 8; c++) drawSlot(g, X0 + c * STEP, this.tabY, CW, CH, 0.18);
 
-    this.layer = new CardLayer(this, CS, { x: W / 2, y: this.topY }, (id) => this.tapCard(id));
+    const drag = new CardDrag<number>(this, {
+      enabled: () => !this.finished && !this.busy,
+      pick: (id) => this.pickStack(id),
+      drop: (id, x, y) => this.dropStack(id, x, y),
+      tap: (id) => this.tapCard(id),
+    });
+    this.layer = new CardLayer(this, CS, { x: W / 2, y: this.topY }, (img, id) => drag.add(img, id));
     this.layer.apply(this.places(), true, 12);
 
     this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, icons.undo, () => this.tapUndo());
@@ -139,6 +146,43 @@ export class FreeCellScene extends Phaser.Scene {
     sfx.card(dests[0].type === 'found' ? 3 : 0);
     this.sync();
     this.afterMove();
+  }
+
+  // ---------- перетаскивание ----------
+
+  /** Карта и правильная стопка на ней — поднимаются вместе. */
+  private pickStack(id: number): Phaser.GameObjects.Image[] | null {
+    const src = this.locate(id);
+    if (!src) return null;
+    const imgs = this.fc.cardsAt(src).map((c) => this.layer.get(cardId(c))!);
+    return imgs.length ? imgs : null;
+  }
+
+  /** Куда показывает точка на столе: ячейки (слева вверху), дома (справа вверху) или столбик. */
+  private destAt(x: number, y: number): FDest | null {
+    if (Math.abs(y - this.topY) < CH * 0.8) return x < W / 2 ? { type: 'cell' } : { type: 'found' };
+    if (y < this.tabY - CH) return null;
+    let best = -1;
+    let bd = Infinity;
+    for (let c = 0; c < 8; c++) {
+      const d = Math.abs(x - persp.x(X0 + c * STEP, y));
+      if (d < bd) {
+        bd = d;
+        best = c;
+      }
+    }
+    return bd < STEP * 0.75 ? { type: 'col', col: best } : null;
+  }
+
+  private dropStack(id: number, x: number, y: number): boolean {
+    const src = this.locate(id);
+    const to = this.destAt(x, y);
+    if (!src || !to || !this.fc.canMove(src, to)) return false;
+    this.fc.move(src, to);
+    sfx.card(to.type === 'found' ? 3 : 0);
+    this.sync();
+    this.afterMove();
+    return true;
   }
 
   /** После хода: ненужные карты сами уходят в дома; проверяем победу и тупик. */
