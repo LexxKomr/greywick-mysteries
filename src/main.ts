@@ -18,6 +18,7 @@ import { MapScene } from './scenes/MapScene';
 import { IntroScene } from './scenes/IntroScene';
 import { GameScene } from './scenes/GameScene';
 import { PyramidScene } from './scenes/PyramidScene';
+import { KlondikeScene } from './scenes/KlondikeScene';
 import { ClueScene } from './scenes/ClueScene';
 import { BoardScene } from './scenes/BoardScene';
 import { AccuseScene } from './scenes/AccuseScene';
@@ -52,7 +53,7 @@ async function start(): Promise<void> {
     input: { activePointers: 2 },
     // ?timer в адресе — для проверки в фоновой вкладке, где браузер не рисует кадры
     fps: { forceSetTimeOut: window.location.search.includes('timer') },
-    scene: [BootScene, MenuScene, MapScene, IntroScene, GameScene, PyramidScene, ClueScene, BoardScene, AccuseScene, EndingScene, SettingsScene],
+    scene: [BootScene, MenuScene, MapScene, IntroScene, GameScene, PyramidScene, KlondikeScene, ClueScene, BoardScene, AccuseScene, EndingScene, SettingsScene],
   });
   (window as unknown as { __game: Phaser.Game }).__game = game;
 }

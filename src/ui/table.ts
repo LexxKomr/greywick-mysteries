@@ -51,14 +51,14 @@ export interface TableUi {
 }
 
 /** Фон стола и узкая верхняя полоска: дело, «Улика N из 12», звёзды. */
-export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, shade = 0): TableUi {
+export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, shade = 0, shadeFrom = 0.3): TableUi {
   const bg = scene.add.image(W / 2, H / 2, bgKey);
   bg.setScale(Math.max(W / bg.width, H / bg.height));
   if (shade > 0) {
     // лёгкое затемнение под картами (для пёстрых столов)
     const sh = scene.add.graphics();
-    const y0 = H * 0.3;
-    const y1 = H * 0.5;
+    const y0 = H * shadeFrom;
+    const y1 = H * (shadeFrom + 0.2);
     sh.fillGradientStyle(0x0a1014, 0x0a1014, 0x0a1014, 0x0a1014, 0, 0, shade, shade);
     sh.fillRect(0, y0, W, y1 - y0);
     sh.fillStyle(0x0a1014, shade);

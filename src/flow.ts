@@ -6,7 +6,7 @@ import { CaseData, caseState } from './services/cases';
 import { save } from './services/save';
 
 /** Какой экран играет какой пасьянс. Пока пасьянс не готов, вместо него идут «Три пика». */
-const SCENES: Record<string, string> = { tripeaks: 'Game', pyramid: 'Pyramid' };
+const SCENES: Record<string, string> = { tripeaks: 'Game', pyramid: 'Pyramid', klondike: 'Klondike' };
 
 export function sceneForLevel(c: CaseData, level: number): string {
   return SCENES[c.levels?.[level - 1]?.game ?? 'tripeaks'] ?? 'Game';

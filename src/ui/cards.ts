@@ -257,6 +257,14 @@ export function createCardTextures(scene: Phaser.Scene): void {
       make(`card_${rank}_${suit}`, (ctx) => paintFace(ctx, suit, labels[rank - 1]));
     }
   }
+  // значки мастей для пустых «домов»
+  for (let suit = 0; suit < 4; suit++) {
+    const key = 'suit_' + suit;
+    if (scene.textures.exists(key)) scene.textures.remove(key);
+    const tex = scene.textures.createCanvas(key, 120, 120)!;
+    drawSuit(tex.getContext(), suit, 60, 60, 96);
+    tex.refresh();
+  }
   make('card_back', paintBack);
   make('card_joker', (ctx) => paintJoker(ctx, t('joker')));
 }
