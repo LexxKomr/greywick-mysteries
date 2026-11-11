@@ -70,6 +70,15 @@ def main(n):
             case['wrong'][who[0]['id']] = paragraphs(body)
         elif head.startswith('РАЗВЯЗКА'):
             case['ending'] = paragraphs(body)
+    # мысли Эдит во время партии: блоки [после вступления] и [после улики N]
+    tpath = os.path.join(os.path.dirname(ROOT), 'cases', f'case-{n:02d}-thoughts-ru.txt')
+    case['thoughts'] = []
+    if os.path.exists(tpath):
+        ttext = io.open(tpath, encoding='utf-8').read().replace('\r\n', '\n')
+        for m in re.finditer(r'^\[после (вступления|улики (\d+))\]\n(.*?)(?=^\[после |\Z)', ttext, flags=re.S | re.M):
+            lines = [l.strip() for l in m.group(3).split('\n') if l.strip() and not l.startswith('—————')]
+            case['thoughts'].append({'after': int(m.group(2) or 0), 'lines': lines})
+        assert len(case['thoughts']) == len(meta['clueTitles']) + 1, 'блоков мыслей: %d' % len(case['thoughts'])
     assert case['intro'] and case['ending'] and case['accuse'], 'не все разделы найдены'
     assert len(case['clues']) == len(meta['clueTitles']), 'улик: %d' % len(case['clues'])
     wrong_ids = {s['id'] for s in meta['suspects']} - {meta['culprit']}
@@ -77,7 +86,7 @@ def main(n):
     out = os.path.join(ROOT, 'src', 'data', 'cases', f'case{n:02d}.ru.json')
     io.open(out, 'w', encoding='utf-8', newline='\n').write(json.dumps(case, ensure_ascii=False, indent=2) + '\n')
     words = sum(len(p.split()) for k in ('intro', 'ending') for p in case[k]) + sum(len(p.split()) for c in case['clues'] for p in c['text'])
-    print('готово:', out, '| улик', len(case['clues']), '| слов', words)
+    print('готово:', out, '| улик', len(case['clues']), '| слов', words, '| мыслей', sum(len(t['lines']) for t in case['thoughts']))
 
 
 if __name__ == '__main__':

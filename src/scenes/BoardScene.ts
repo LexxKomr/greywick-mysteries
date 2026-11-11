@@ -30,7 +30,7 @@ export class BoardScene extends Phaser.Scene {
     const stars = save.progress(c.id, total).stars;
     const found = save.found(c.id, total);
     const state = caseState(c);
-    addBackground(this, 'bg_fog', 0.35);
+    addBackground(this, 'table_library', 0.5); // кабинет Эдит
 
     const back = data.from === 'Accuse' ? 'Accuse' : data.from === 'Ending' ? 'Ending' : 'Map';
     roundButton(this, 82, 82, 50, drawBack, () => this.scene.start(back, { caseId: c.id }));

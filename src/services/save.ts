@@ -19,6 +19,8 @@ export interface SaveData {
   /** пора показать межстраничную рекламу при следующем переходе */
   adDue: boolean;
   daily: { date: number; stars: number } | null;
+  /** пасьянсы, с которыми Эдит уже познакомила игрока */
+  seen: string[];
 }
 
 interface Backend {
@@ -48,7 +50,7 @@ const localBackend: Backend = {
 let backend: Backend = localBackend;
 
 function fresh(): SaveData {
-  return { v: 1, sound: true, lang: 'ru', cases: {}, wins: 0, adDue: false, daily: null };
+  return { v: 1, sound: true, lang: 'ru', cases: {}, wins: 0, adDue: false, daily: null, seen: [] };
 }
 
 class Save {
@@ -127,6 +129,11 @@ class Save {
   accuse(caseId: string, suspectId: string, total: number): void {
     this.progress(caseId, total).accused = suspectId;
     this.data.adDue = false;
+    this.persist();
+  }
+
+  markSeen(kind: string): void {
+    if (!this.data.seen.includes(kind)) this.data.seen.push(kind);
     this.persist();
   }
 

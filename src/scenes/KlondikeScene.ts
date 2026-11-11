@@ -57,7 +57,7 @@ export class KlondikeScene extends Phaser.Scene {
     this.topY = STRIP_H + 26 + CH / 2;
     this.tabY = this.topY + CH + 34;
     const helpersY = H - 178;
-    this.tabBottom = helpersY - 120;
+    this.tabBottom = helpersY - 250; // над кнопками оставлено место для облачка с мыслями Эдит
 
     // места под дома, сброс и колоду
     const g = this.add.graphics();
@@ -86,6 +86,7 @@ export class KlondikeScene extends Phaser.Scene {
     this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, icons.undo, () => this.tapUndo());
     this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), icons.hint, () => void this.tapHint());
     this.refreshHud();
+    this.ui.thoughts(helpersY - 178, () => !this.finished && !this.busy);
   }
 
   /** Где сейчас должна лежать каждая карта. */

@@ -251,6 +251,22 @@ export class ScrollArea {
   private startScroll = 0;
   /** последний жест был прокруткой, а не нажатием */
   moved = false;
+  private dead = false;
+
+  setDepth(d: number): this {
+    this.content.setDepth(d);
+    this.thumb.setDepth(d);
+    this.more.setDepth(d);
+    return this;
+  }
+
+  destroy(): void {
+    this.dead = true;
+    this.scene.tweens.killTweensOf(this.more);
+    this.content.destroy();
+    this.thumb.destroy();
+    this.more.destroy();
+  }
 
   constructor(scene: Scene, private x: number, private y: number, private w: number, private h: number, private thumbColor: number = C.brassDark) {
     this.scene = scene;
@@ -267,6 +283,7 @@ export class ScrollArea {
     scene.tweens.add({ targets: this.more, y: y + h + 16, duration: 650, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     scene.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      if (this.dead) return;
       this.moved = false;
       if (!this.contains(p)) return;
       this.dragging = true;
@@ -274,14 +291,14 @@ export class ScrollArea {
       this.startScroll = this.scroll;
     });
     scene.input.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (!this.dragging || !p.isDown) return;
+      if (this.dead || !this.dragging || !p.isDown) return;
       const dy = p.y - this.startY;
       if (Math.abs(dy) > 14) this.moved = true;
       if (this.moved) this.setScroll(this.startScroll - dy);
     });
     scene.input.on('pointerup', () => (this.dragging = false));
     scene.input.on('wheel', (p: Phaser.Input.Pointer, _o: unknown, _dx: number, dy: number) => {
-      if (this.contains(p)) this.setScroll(this.scroll + dy);
+      if (!this.dead && this.contains(p)) this.setScroll(this.scroll + dy);
     });
   }
 
@@ -335,6 +352,11 @@ export class ScrollArea {
   }
 }
 
+let openDialogs = 0;
+export const dialogsOpen = (): number => openDialogs;
+export const dialogOpened = (): void => void openDialogs++;
+export const dialogClosed = (): void => void (openDialogs = Math.max(0, openDialogs - 1));
+
 export interface DialogButton {
   label: string;
   style?: ButtonStyle;
@@ -346,6 +368,8 @@ export interface DialogButton {
 export function showDialog(scene: Scene, title: string, text: string, buttons: DialogButton[], extra?: (c: Phaser.GameObjects.Container, y: number) => number): () => void {
   const shade = scene.add.rectangle(W / 2, H / 2, W, H, 0x0a1014, 0.72).setInteractive();
   const c = scene.add.container(0, 0);
+  openDialogs++;
+  scene.events.once('shutdown', () => (openDialogs = 0));
   const pw = 900;
   const body = text ? txt(scene, W / 2, 0, text, 44, C.ink, { wrap: pw - 140 }) : null;
   let ph = 130 + 90 + (body ? body.height + 40 : 0) + buttons.length * 150 + 30;
@@ -365,6 +389,7 @@ export function showDialog(scene: Scene, title: string, text: string, buttons: D
     y += body.height + 50;
   }
   const close = () => {
+    dialogClosed();
     shade.destroy();
     c.destroy();
   };

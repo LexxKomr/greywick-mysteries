@@ -40,6 +40,8 @@ export interface CaseData {
   ending: string[];
   /** вид пасьянса для каждой партии (по номеру улики) */
   levels: LevelSpec[];
+  /** мысли Эдит: блок доступен, когда найдено улик не меньше after */
+  thoughts?: { after: number; lines: string[] }[];
 }
 
 const files = import.meta.glob('../data/cases/*.json', { eager: true, import: 'default' }) as Record<string, unknown>;

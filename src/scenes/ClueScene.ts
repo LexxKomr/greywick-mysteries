@@ -27,7 +27,7 @@ export class ClueScene extends Phaser.Scene {
     const c = getCase(data.caseId);
     const clue = c.clues[data.index];
     const total = c.clues.length;
-    addBackground(this, 'bg_fog', 0.2);
+    addBackground(this, 'table_library', 0.55);
 
     let y = 96;
     ribbon(this, W / 2, y, 760, 110, data.isNew ? t('clue.found') : t('clue.number', { n: data.index + 1, total }), 60);
@@ -37,26 +37,45 @@ export class ClueScene extends Phaser.Scene {
     starsRow(this, W / 2, y + 60, stars, 44);
     y += 130;
 
-    // карточка с предметом
-    const cardH = 300;
+    // улика на листе старой бумаги, приколотом латунной кнопкой (как на референсе 3)
+    const sheetW = 620;
+    const sheetH = Math.min(440, Math.round(H * 0.23));
+    const sheet = this.add.container(W / 2, y + sheetH / 2 + 6);
     const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.35);
-    g.fillRoundedRect(W / 2 - 250 + 4, y + 10, 500, cardH, 14);
+    g.fillStyle(0x000000, 0.4);
+    g.fillRoundedRect(-sheetW / 2 + 6, -sheetH / 2 + 12, sheetW, sheetH, 10);
+    g.fillStyle(0xe9d9b4, 1);
+    g.fillRoundedRect(-sheetW / 2, -sheetH / 2, sheetW, sheetH, 10);
     g.fillStyle(C.paperLight, 1);
-    g.fillRoundedRect(W / 2 - 250, y, 500, cardH, 14);
-    g.lineStyle(3, C.paperDark, 1);
-    g.strokeRoundedRect(W / 2 - 232, y + 18, 464, cardH - 36, 8);
+    g.fillRoundedRect(-sheetW / 2 + 10, -sheetH / 2 + 10, sheetW - 20, sheetH - 20, 6);
+    g.lineStyle(2, C.paperDark, 1);
+    g.strokeRoundedRect(-sheetW / 2 + 24, -sheetH / 2 + 24, sheetW - 48, sheetH - 48, 4);
+    // пятно от чашки и загнутый уголок — чтобы лист выглядел старым
+    g.lineStyle(5, 0xc9a877, 0.35);
+    g.strokeCircle(sheetW / 2 - 96, sheetH / 2 - 84, 44);
+    g.fillStyle(0xd8c49a, 1);
+    g.fillTriangle(sheetW / 2 - 10, sheetH / 2 - 10, sheetW / 2 - 64, sheetH / 2 - 10, sheetW / 2 - 10, sheetH / 2 - 64);
+    // латунная кнопка
+    g.fillStyle(0x000000, 0.35);
+    g.fillCircle(3, -sheetH / 2 + 14, 22);
     g.fillStyle(C.brassDark, 1);
-    g.fillCircle(W / 2, y + 4, 17);
+    g.fillCircle(0, -sheetH / 2 + 8, 22);
+    g.fillStyle(C.brass, 1);
+    g.fillCircle(0, -sheetH / 2 + 8, 18);
     g.fillStyle(C.brassLight, 1);
-    g.fillCircle(W / 2 - 3, y + 1, 9);
-    const icon = this.add.image(W / 2, y + cardH / 2 + 8, clue.image).setDisplaySize(270, 270);
+    g.fillCircle(-5, -sheetH / 2 + 3, 8);
+    const size = sheetH - 70;
+    const icon = this.add.image(0, 14, clue.image).setDisplaySize(size, size);
+    sheet.add([g, icon]);
+    sheet.setAngle(-2.5);
     if (data.isNew) {
       const full = icon.scaleX;
       icon.setScale(0.1);
       this.tweens.add({ targets: icon, scale: full, duration: 450, ease: 'Back.easeOut', delay: 150 });
+      sheet.setScale(0.85).setAlpha(0);
+      this.tweens.add({ targets: sheet, scale: 1, alpha: 1, duration: 300, ease: 'Cubic.easeOut' });
     }
-    y += cardH + 30;
+    y += sheetH + 44;
 
     // название и текст
     const bottom = H - 220;

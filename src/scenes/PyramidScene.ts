@@ -7,7 +7,7 @@ import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardKey } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
 
 const PS = 1.2; // карты пирамиды крупнее обычных
@@ -89,6 +89,7 @@ export class PyramidScene extends Phaser.Scene {
     this.hint = helperButton(this, W / 2, helpersY, t('game.hint'), String(FREE_HINTS), icons.hint, () => void this.tapHint());
     helperButton(this, W / 2 + 290, helpersY, t('game.plusPass'), t('game.ad'), icons.plusCards, () => void this.tapPlusPass());
     this.refreshHud();
+    this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.adBusy);
   }
 
   private buildDeck(): void {

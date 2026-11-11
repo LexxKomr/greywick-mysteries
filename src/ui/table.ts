@@ -5,7 +5,8 @@ import Phaser from 'phaser';
 import { C, H, W } from '../config';
 import { toMenuAfterGame } from '../flow';
 import { dailySeed } from '../logic/generator';
-import { CaseData, getCase } from '../services/cases';
+import { CaseData, GameKind, getCase } from '../services/cases';
+import { attachThoughts, showIntro, showRules } from './edith';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
@@ -19,6 +20,8 @@ export interface LevelData {
 
 export interface LevelCtx {
   sceneKey: string;
+  /** какой пасьянс играет этот экран */
+  kind: GameKind;
   data: LevelData;
   mode: 'case' | 'daily';
   caseData: CaseData | null;
@@ -32,8 +35,10 @@ export function levelCtx(sceneKey: string, data: LevelData): LevelCtx {
   const caseData = data.caseId ? getCase(data.caseId) : null;
   const level = data.level ?? 1;
   const total = caseData?.clues.length ?? 12;
+  const kinds: Record<string, GameKind> = { Game: 'tripeaks', Pyramid: 'pyramid', Klondike: 'klondike', FreeCell: 'freecell' };
   return {
     sceneKey,
+    kind: kinds[sceneKey] ?? 'tripeaks',
     data,
     mode: data.mode ?? 'case',
     caseData,
@@ -48,6 +53,8 @@ export const STRIP_H = 96;
 export interface TableUi {
   /** сколько звёзд игрок получит, если выиграет сейчас */
   setStars(n: number): void;
+  /** включает мысли Эдит: y — где показывать облачко, canShow — можно ли сейчас */
+  thoughts(y: number, canShow: () => boolean): void;
 }
 
 /** Фон стола и узкая верхняя полоска: дело, «Улика N из 12», звёзды. */
@@ -76,7 +83,12 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
   }, onHome).setDepth(401);
 
   const title = ctx.mode === 'case' ? `${t('map.caseShort', { n: ctx.caseData!.number })} · ${t('game.clue', { n: ctx.level, total: ctx.total })}` : t('game.daily');
-  txt(scene, W / 2, STRIP_H / 2 - 4, title, 44, C.brassLight, { head: true }).setDepth(401);
+  const tt = txt(scene, W / 2 - 30, STRIP_H / 2 - 4, title, 42, C.brassLight, { head: true }).setDepth(401);
+  tt.setScale(Math.min(1, 560 / tt.width));
+
+  // кнопка «Правила»
+  roundButton(scene, W - 226, STRIP_H / 2 - 2, 34, () => {}, () => showRules(scene, ctx.kind)).setDepth(401);
+  txt(scene, W - 226, STRIP_H / 2 - 5, '?', 46, C.paperLight, { head: true }).setDepth(402);
 
   const stars = scene.add.graphics().setDepth(401);
   const setStars = (n: number) => {
@@ -84,7 +96,16 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
     for (let i = 0; i < 3; i++) drawStar(stars, W - 150 + i * 52, STRIP_H / 2 - 3, 20, i < n);
   };
   setStars(3);
-  return { setStars };
+
+  // перед первой партией нового пасьянса Эдит коротко объясняет правила
+  if (!save.data.seen.includes(ctx.kind)) {
+    scene.time.delayedCall(900, () => showIntro(scene, ctx.kind, () => save.markSeen(ctx.kind)));
+  }
+
+  return {
+    setStars,
+    thoughts: (y, canShow) => attachThoughts(scene, ctx.caseData, ctx.kind, y, canShow),
+  };
 }
 
 export interface Helper {
