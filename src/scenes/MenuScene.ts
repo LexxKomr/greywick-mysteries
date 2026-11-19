@@ -7,7 +7,7 @@ import { dailySeed } from '../logic/generator';
 import { t } from '../services/i18n';
 import { currentCase } from '../services/cases';
 import { save } from '../services/save';
-import { addBackground, drawPanel, fadeIn, makeButton, txt } from '../ui/widgets';
+import { fadeIn, makeButton, txt } from '../ui/widgets';
 import { confirmProgressReset } from '../ui/progress';
 
 export class MenuScene extends Phaser.Scene {
@@ -17,42 +17,34 @@ export class MenuScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    addBackground(this, 'bg_harbor', 0.12);
+    const backdrop = this.add.image(W * 0.6, H / 2, 'menu_promenade').setOrigin(0.6, 0.5);
+    const widthScale = W / backdrop.width;
+    const heightScale = Math.max(widthScale, H / backdrop.height);
+    backdrop.setScale(Math.max(widthScale, heightScale * 0.93), heightScale);
 
-    // логотип на бумажном свитке
-    const ly = Math.round(H * 0.1);
-    const g = this.add.graphics();
-    drawPanel(g, 90, ly, W - 180, 440, 40);
-    g.fillStyle(C.wine, 1);
-    g.fillCircle(W / 2, ly + 6, 20);
-    g.fillStyle(C.brass, 1);
-    g.fillCircle(W / 2, ly + 6, 11);
-    const title = txt(this, W / 2, ly + 170, t('title.main').replace(' ', '\n'), 124, C.wine, { head: true, spacing: -14 });
-    title.setScale(Math.min(1, 765 / title.width));
-    g.lineStyle(3, C.brassDark, 0.8);
-    g.lineBetween(250, ly + 322, 440, ly + 322);
-    g.lineBetween(W - 440, ly + 322, W - 250, ly + 322);
-    g.fillStyle(C.brassDark, 1);
-    g.fillCircle(W / 2, ly + 322, 8);
-    g.fillCircle(W / 2 - 40, ly + 322, 5);
-    g.fillCircle(W / 2 + 40, ly + 322, 5);
-    txt(this, W / 2, ly + 372, t('title.sub'), 54, C.inkSoft, { head: true });
+    const logoY = Math.round(H * 0.245);
+    const scroll = this.add.image(W / 2, logoY, 'menu_scroll');
+    scroll.setDisplaySize(950, 504);
+    const title = txt(this, W / 2, logoY + 30, t('title.main').replace(' ', '\n'), 110, C.wineDark, { head: true, spacing: -20 });
+    title.setScale(Math.min(1, 710 / title.width));
+    const subtitle = txt(this, W / 2, logoY + 152, t('title.sub'), 40, C.ink, { head: true });
+    subtitle.setScale(Math.min(1, 720 / subtitle.width));
 
-    // кнопки: «Играть» ведёт на карту городка
-    let y = Math.round(H * 0.5);
-    makeButton(this, W / 2, y, 700, 190, t('menu.play'), () => this.scene.start('Map'), 'primary', 88);
-    y += 250;
+    const x = W / 2 - 32;
+    makeButton(this, x, H * 0.545, 630, 240, t('menu.play'), () => this.scene.start('Map'), 'paper', 102,
+      { key: 'menu_play', labelOffsetY: 12 });
     const dailyDone = save.data.daily?.date === dailySeed();
-    makeButton(this, W / 2, y, 600, 130, dailyDone ? t('menu.dailyDone') : t('menu.daily'), () => void startDaily(this));
-    y += 165;
-    makeButton(this, W / 2, y, 600, 130, t('menu.settings'), () => this.scene.start('Settings'));
-    y += 158;
-    makeButton(this, W / 2, y, 480, 100, t('menu.restart'), () => confirmProgressReset(this, () => {
+    makeButton(this, x, H * 0.665, 550, 116, dailyDone ? t('menu.dailyDone') : t('menu.daily'), () => void startDaily(this), 'paper', 53,
+      { key: 'menu_daily', labelOffsetX: 43 });
+    makeButton(this, x, H * 0.751, 550, 116, t('menu.settings'), () => this.scene.start('Settings'), 'paper', 53,
+      { key: 'menu_settings', labelOffsetX: 43 });
+    makeButton(this, x, H * 0.843, 326, 76, t('menu.restart'), () => confirmProgressReset(this, () => {
       const first = currentCase();
       if (first) continueCase(this, first);
       else this.scene.start('Map');
-    }), 'dark', 42);
+    }), 'dark', 35, { key: 'menu_reset' });
 
-    txt(this, W - 24, H - 20, 'v' + VERSION, 30, C.paperLight, { ox: 1, oy: 1 }).setAlpha(0.6);
+    const version = txt(this, W - 26, H - 15, 'v' + VERSION, 27, C.paperLight, { ox: 1, oy: 1 });
+    version.setShadow(0, 2, '#10191e', 6, false, true).setAlpha(0.8);
   }
 }

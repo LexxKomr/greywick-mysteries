@@ -87,30 +87,44 @@ export interface Button extends Phaser.GameObjects.Container {
 }
 
 /** Крупная скруглённая кнопка. (x, y) — центр. */
-export function makeButton(scene: Scene, x: number, y: number, w: number, h: number, label: string, onClick: () => void, style: ButtonStyle = 'paper', size?: number): Button {
-  const g = scene.add.graphics();
+interface ButtonArtwork {
+  key: string;
+  labelOffsetX?: number;
+  labelOffsetY?: number;
+}
+
+export function makeButton(scene: Scene, x: number, y: number, w: number, h: number, label: string, onClick: () => void,
+  style: ButtonStyle = 'paper', size?: number, artwork?: ButtonArtwork): Button {
   const r = Math.min(h / 2, 30);
   const fill = style === 'primary' ? C.wine : style === 'dark' ? C.night : C.paper;
   const textColor = style === 'paper' ? C.wine : C.paperLight;
-  g.fillStyle(0x000000, 0.4);
-  g.fillRoundedRect(-w / 2 + 2, -h / 2 + 9, w, h, r);
-  const parts: Phaser.GameObjects.GameObject[] = [g];
-  if (style === 'primary' && scene.textures.exists('button_enamel_wide')) {
-    const key = 'button_enamel_wide';
-    const skin = scene.game.renderer.type === Phaser.WEBGL
-      ? scene.add.nineslice(0, 0, key, undefined, w, h, 42, 42, 24, 24)
-      : scene.add.image(0, 0, key).setDisplaySize(w, h);
-    parts.push(skin);
+  const custom = artwork && scene.textures.exists(artwork.key) ? artwork : undefined;
+  const parts: Phaser.GameObjects.GameObject[] = [];
+  if (custom) {
+    parts.push(scene.add.image(0, 0, custom.key).setDisplaySize(w, h));
   } else {
-    g.fillStyle(fill, 1);
-    g.fillRoundedRect(-w / 2, -h / 2, w, h, r);
-    g.lineStyle(4, C.brass, 1);
-    g.strokeRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, r - 2);
-    g.lineStyle(2, C.brassDark, 0.76);
-    g.strokeRoundedRect(-w / 2 + 9, -h / 2 + 9, w - 18, h - 18, r - 9);
+    const g = scene.add.graphics();
+    g.fillStyle(0x000000, 0.4);
+    g.fillRoundedRect(-w / 2 + 2, -h / 2 + 9, w, h, r);
+    parts.push(g);
+    if (style === 'primary' && scene.textures.exists('button_enamel_wide')) {
+      const key = 'button_enamel_wide';
+      const skin = scene.game.renderer.type === Phaser.WEBGL
+        ? scene.add.nineslice(0, 0, key, undefined, w, h, 42, 42, 24, 24)
+        : scene.add.image(0, 0, key).setDisplaySize(w, h);
+      parts.push(skin);
+    } else {
+      g.fillStyle(fill, 1);
+      g.fillRoundedRect(-w / 2, -h / 2, w, h, r);
+      g.lineStyle(4, C.brass, 1);
+      g.strokeRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, r - 2);
+      g.lineStyle(2, C.brassDark, 0.76);
+      g.strokeRoundedRect(-w / 2 + 9, -h / 2 + 9, w - 18, h - 18, r - 9);
+    }
   }
-  const text = txt(scene, 0, -3, label, size ?? Math.round(h * 0.42), textColor, { head: true });
-  const fit = () => text.setScale(Math.min(1, (w - 60) / Math.max(1, text.width / text.scaleX)));
+  const offset = custom?.labelOffsetX ?? 0;
+  const text = txt(scene, offset, custom?.labelOffsetY ?? -3, label, size ?? Math.round(h * 0.42), textColor, { head: true });
+  const fit = () => text.setScale(Math.min(1, (w - 60 - 2 * Math.abs(offset)) / Math.max(1, text.width)));
   fit();
   const c = scene.add.container(x, y, [...parts, text]) as Button;
   c.setSize(w, h);
