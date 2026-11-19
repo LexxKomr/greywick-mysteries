@@ -88,13 +88,22 @@ export type CaseState = 'new' | 'playing' | 'accuse' | 'closed';
 export function caseState(c: CaseData): CaseState {
   const total = c.clues.length;
   const p = save.progress(c.id, total);
-  if (p.accused) return 'closed';
+  if (p.accused === c.culprit) return 'closed';
   const found = save.found(c.id, total);
   if (found >= total) return 'accuse';
   return found > 0 || p.introSeen ? 'playing' : 'new';
 }
 
+/** До нового дела можно добраться только после раскрытия предыдущих. */
+export function caseUnlocked(number: number): boolean {
+  for (let previous = 1; previous < number; previous++) {
+    const c = caseByNumber(previous);
+    if (!c || caseState(c) !== 'closed') return false;
+  }
+  return true;
+}
+
 /** Дело, в которое игрок играет сейчас: первое незакрытое. */
 export function currentCase(): CaseData | null {
-  return listCases().find((c) => caseState(c) !== 'closed') ?? null;
+  return listCases().find((c) => caseUnlocked(c.number) && caseState(c) !== 'closed') ?? null;
 }

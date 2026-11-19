@@ -1,7 +1,7 @@
 // Игровой стол «Косынка» (чайная «Морской вид»).
 
 import Phaser from 'phaser';
-import { C, H, W } from '../config';
+import { H, W } from '../config';
 import { KDest, KSource, KlondikeGame, klondikeStars, solveKlondikeFrom } from '../logic/klondike';
 import { dailyPreset } from '../logic/daily';
 import { KLONDIKE_SEEDS, klondikeSeed } from '../logic/seeds';
@@ -11,6 +11,7 @@ import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
 import { CardDrag } from '../ui/drag';
+import { HintFlash, hintCard, hintSlot } from '../ui/hints';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
@@ -19,6 +20,7 @@ const CW = CARD_W * CS;
 const CH = CARD_H * CS;
 const STEP = 152;
 const X0 = (W - 6 * STEP) / 2;
+const STOCK_X = X0 + 6 * STEP;
 const FREE_HINTS = 3;
 
 export class KlondikeScene extends Phaser.Scene {
@@ -28,7 +30,9 @@ export class KlondikeScene extends Phaser.Scene {
   private layer!: CardLayer;
   private hint!: Helper;
   private undoBtn!: Helper;
-  private stockRing!: Phaser.GameObjects.Graphics;
+  private stockRing!: Phaser.GameObjects.Image;
+  private flash!: HintFlash;
+  private suggested?: { cardId: number; to: KDest };
   private topY = 0;
   private tabY = 0;
   private tabBottom = 0;
@@ -47,6 +51,7 @@ export class KlondikeScene extends Phaser.Scene {
     this.hintsLeft = FREE_HINTS;
     this.finished = false;
     this.busy = false;
+    this.suggested = undefined;
   }
 
   create(): void {
@@ -57,6 +62,7 @@ export class KlondikeScene extends Phaser.Scene {
       ? klondikeSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty)
       : dailyPreset(ctx.data.dailyDate, KLONDIKE_SEEDS[1]);
     this.kg = new KlondikeGame(seed);
+    this.flash = new HintFlash(this);
     (window as unknown as { __kl: unknown }).__kl = { game: this.kg, scene: this };
 
     // раскладка снизу вверх: кнопки, столбики, ряд домов и колоды; всё — на столешнице
@@ -80,17 +86,11 @@ export class KlondikeScene extends Phaser.Scene {
         .setAlpha(0.84).setScale(persp.s(this.topY) * 0.84, persp.s(this.topY) * 0.74);
     }
     drawSlot(g, X0 + 5 * STEP, this.topY, CW, CH, 0.25);
-    drawSlot(g, X0 + 6 * STEP, this.topY, CW, CH, 0.5);
+    drawSlot(g, STOCK_X, this.topY, CW, CH, 0.5);
     for (let c = 0; c < 7; c++) drawSlot(g, X0 + c * STEP, this.tabY, CW, CH, 0.18);
-    // круговая стрелка на пустой колоде: перевернуть сброс
-    this.stockRing = this.add.graphics();
-    const sx = persp.x(X0 + 6 * STEP, this.topY);
-    this.stockRing.lineStyle(9, C.brassLight, 0.75);
-    this.stockRing.beginPath();
-    this.stockRing.arc(sx, this.topY, 34, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(110), false);
-    this.stockRing.strokePath();
-    this.stockRing.fillStyle(C.brassLight, 0.75);
-    this.stockRing.fillTriangle(sx - 50, this.topY - 22, sx - 16, this.topY - 32, sx - 38, this.topY + 8);
+    const sx = persp.x(STOCK_X, this.topY);
+    const iconSize = CW * persp.s(this.topY) * 0.86;
+    this.stockRing = this.add.image(sx, this.topY, 'glyph_recycle').setDisplaySize(iconSize, iconSize);
     const zone = this.add.zone(sx, this.topY, CW + 10, CH + 10).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => this.tapStock());
 
@@ -136,6 +136,8 @@ export class KlondikeScene extends Phaser.Scene {
   }
 
   private sync(): void {
+    this.flash.clear();
+    this.suggested = undefined;
     this.layer.apply(this.places());
     this.refreshHud();
   }
@@ -165,14 +167,15 @@ export class KlondikeScene extends Phaser.Scene {
     const src = this.locate(id);
     if (src === 'stock') return this.tapStock();
     if (!src) return;
-    const dests = this.kg.destinations(src);
-    if (!dests.length) {
+    const suggested = this.suggested?.cardId === id ? this.suggested.to : undefined;
+    const to = suggested && this.kg.canMove(src, suggested) ? suggested : this.kg.destinations(src)[0];
+    if (!to) {
       sfx.no();
       this.layer.shake(id);
       return;
     }
-    this.kg.move(src, dests[0]);
-    sfx.card(dests[0].type === 'found' ? 3 : 0);
+    this.kg.move(src, to);
+    sfx.card(to.type === 'found' ? 3 : 0);
     this.sync();
     this.afterMove();
   }
@@ -181,6 +184,8 @@ export class KlondikeScene extends Phaser.Scene {
 
   /** Карта и все карты на ней — поднимаются вместе. */
   private pickStack(id: number): Phaser.GameObjects.Image[] | null {
+    this.flash.clear();
+    this.suggested = undefined;
     const src = this.locate(id);
     if (!src || src === 'stock') return null;
     const imgs = this.kg.cardsAt(src).map((c) => this.layer.get(cardId(c))!);
@@ -250,9 +255,9 @@ export class KlondikeScene extends Phaser.Scene {
     this.checkDead();
   }
 
-  /** Выиграть уже нельзя: полезных ходов нет совсем, или решатель перебрал все варианты. */
+  /** Лимит поиска не считается доказательством тупика. */
   private isDead(): boolean {
-    return this.kg.stuck || solveKlondikeFrom(this.kg, 3000).result === false;
+    return solveKlondikeFrom(this.kg, 3000).result === false;
   }
 
 
@@ -292,10 +297,16 @@ export class KlondikeScene extends Phaser.Scene {
 
   private async tapHint(): Promise<void> {
     if (this.finished || this.busy) return;
-    // сначала решатель: если выиграть уже нельзя, подсказку не тратим, а сразу говорим об этом
-    const plan = solveKlondikeFrom(this.kg, 15_000);
-    if (plan.result === false || this.kg.stuck) {
+    this.flash.clear();
+    this.suggested = undefined;
+    const plan = solveKlondikeFrom(this.kg);
+    if (plan.result === false) {
       this.onStuck();
+      return;
+    }
+    const move = plan.first;
+    if (!move || (move.type === 'draw' ? !this.kg.canDraw : !this.kg.canMove(move.from, move.to))) {
+      toast(this, t('game.hintUnknown'));
       return;
     }
     if (this.hintsLeft > 0) {
@@ -308,30 +319,20 @@ export class KlondikeScene extends Phaser.Scene {
     }
     this.refreshHud();
     sfx.clue();
-    const f = plan.first;
-    if (f?.type === 'draw') return this.hintStock();
-    const moves = f ? [f] : this.kg.usefulMoves().sort((a, b) => b.weight - a.weight);
-    if (!moves.length) {
-      // полезных ходов на столе нет — подсказываем колоду
-      const top = this.kg.stock[this.kg.stock.length - 1];
-      if (top) this.layer.pulse([cardId(top)]);
-      else toast(this, t('klondike.hintRecycle'));
+    if (move.type === 'draw') {
+      this.flash.show(hintSlot(STOCK_X, this.topY, CW, CH));
       return;
     }
-    const m = moves[0];
-    const ids = this.kg.cardsAt(m.from).map(cardId);
-    const to: KDest = m.to;
-    if (to.type === 'tab') {
-      const pile = this.kg.tableau[to.col];
-      if (pile.length) ids.push(cardId(pile[pile.length - 1]));
-    }
-    this.layer.pulse(ids);
-  }
-
-  /** Подсказка «возьмите карту из колоды» (или переверните её). */
-  private hintStock(): void {
-    const top = this.kg.stock[this.kg.stock.length - 1];
-    if (top) this.layer.pulse([cardId(top)]);
-    else toast(this, t('klondike.hintRecycle'));
+    const [lead, next] = this.kg.cardsAt(move.from);
+    const id = cardId(lead);
+    const source = hintCard(this.layer.get(id)!, next && this.layer.get(cardId(next)));
+    const pile = move.to.type === 'tab' ? this.kg.tableau[move.to.col] : undefined;
+    const target = pile?.[pile.length - 1];
+    const destination = target
+      ? hintCard(this.layer.get(cardId(target))!)
+      : hintSlot(X0 + (move.to.type === 'found' ? lead.suit : move.to.col) * STEP,
+        move.to.type === 'found' ? this.topY : this.tabY, CW, CH);
+    this.suggested = { cardId: id, to: move.to };
+    this.flash.show(source, destination);
   }
 }

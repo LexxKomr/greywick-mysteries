@@ -92,15 +92,21 @@ export class FreeCellGame {
     return (this.freeCells + 1) * Math.pow(2, Math.max(0, empty));
   }
 
+  /** Лимит для подходящего столбика. null означает, что карта туда не подходит по рангу или цвету. */
+  columnLimit(card: Card, col: number): number | null {
+    const dest = this.cols[col];
+    if (dest.length && !stacks(card, dest[dest.length - 1])) return null;
+    return this.maxRun(dest.length === 0);
+  }
+
   canMove(from: FSource, to: FDest): boolean {
     const cards = this.cardsAt(from);
     if (!cards.length) return false;
     if (to.type === 'found') return cards.length === 1 && this.fitsFoundation(cards[0]);
     if (to.type === 'cell') return cards.length === 1 && from.type === 'col' && this.freeCells > 0;
     if (from.type === 'col' && from.col === to.col) return false;
-    const dest = this.cols[to.col];
-    if (dest.length && !stacks(cards[0], dest[dest.length - 1])) return false;
-    return cards.length <= this.maxRun(dest.length === 0);
+    const limit = this.columnLimit(cards[0], to.col);
+    return limit !== null && cards.length <= limit;
   }
 
   move(from: FSource, to: FDest, countMove = true): boolean {
@@ -180,7 +186,8 @@ export class FreeCellGame {
         ? { type: 'col', col: first.fromCol, index: this.cols[first.fromCol].length - 1 }
         : { type: 'cell', i: this.cells.findIndex((x) => !!x && (x.rank - 1) * 4 + x.suit === first.card) };
       const to: FDest = first.to === 'found' ? { type: 'found' } : first.to === 'cell' ? { type: 'cell' } : { type: 'col', col: first.to };
-      if (this.canMove(from, to)) return { from, to };
+      const lead = this.cardsAt(from)[0];
+      if (lead && (lead.rank - 1) * 4 + lead.suit === first.card && this.canMove(from, to)) return { from, to };
     }
     const all = this.singleMoves();
     const rank = (m: { from: FSource; to: FDest }) => {

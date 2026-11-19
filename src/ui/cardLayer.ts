@@ -102,17 +102,6 @@ export class CardLayer {
     return this.sprites.get(id);
   }
 
-  /** Подсветка карт (подсказка). */
-  pulse(ids: number[]): void {
-    for (const id of ids) {
-      const s = this.sprites.get(id);
-      if (!s) continue;
-      s.setTint(0xffd36b);
-      const base = s.scaleY;
-      this.scene.tweens.add({ targets: s, scaleY: base * 1.1, duration: 220, yoyo: true, repeat: 2, onComplete: () => s.clearTint().setScale(base) });
-    }
-  }
-
   /** «Нет хода»: карта покачивается. */
   shake(id: number): void {
     const s = this.sprites.get(id);

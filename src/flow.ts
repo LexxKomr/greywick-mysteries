@@ -2,7 +2,7 @@
 
 import Phaser from 'phaser';
 import { ads } from './services/ads';
-import { CaseData, caseState } from './services/cases';
+import { CaseData, caseState, caseUnlocked } from './services/cases';
 import { save } from './services/save';
 import { dailyKind } from './logic/daily';
 import { dailySeed } from './logic/generator';
@@ -47,6 +47,10 @@ export async function toMenuAfterGame(scene: Phaser.Scene, key = 'Menu', data?: 
 
 /** Следующий шаг дела: вступление → партии → выбор виновного → развязка. */
 export function continueCase(scene: Phaser.Scene, c: CaseData): void {
+  if (!caseUnlocked(c.number)) {
+    scene.scene.start('Map');
+    return;
+  }
   const total = c.clues.length;
   const state = caseState(c);
   if (state === 'closed') {

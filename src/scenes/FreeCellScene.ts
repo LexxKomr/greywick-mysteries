@@ -11,14 +11,16 @@ import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
 import { CardDrag } from '../ui/drag';
+import { HintFlash, hintCard, hintSlot } from '../ui/hints';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
-import { fadeIn } from '../ui/widgets';
+import { fadeIn, toast } from '../ui/widgets';
 
 const CS = 1.2;
 const CW = CARD_W * CS;
 const CH = CARD_H * CS;
 const STEP = 132;
 const X0 = (W - 7 * STEP) / 2;
+const topX = (index: number) => W / 2 + (index - 3.5) * 128 + (index < 4 ? -16 : 16);
 const FAN = 54; // стол в перспективе — карты в столбике ближе друг к другу
 const FREE_HINTS = 3;
 
@@ -27,6 +29,8 @@ export class FreeCellScene extends Phaser.Scene {
   private ui!: TableUi;
   private fc!: FreeCellGame;
   private layer!: CardLayer;
+  private flash!: HintFlash;
+  private suggested?: { id: number; to: FDest };
   private hint!: Helper;
   private undoBtn!: Helper;
   private topY = 0;
@@ -47,6 +51,7 @@ export class FreeCellScene extends Phaser.Scene {
     this.hintsLeft = FREE_HINTS;
     this.finished = false;
     this.busy = false;
+    this.suggested = undefined;
   }
 
   create(): void {
@@ -57,6 +62,7 @@ export class FreeCellScene extends Phaser.Scene {
       ? freecellSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty)
       : dailyPreset(ctx.data.dailyDate, FREECELL_SEEDS[0]);
     this.fc = new FreeCellGame(seed);
+    this.flash = new HintFlash(this);
     (window as unknown as { __fc: unknown }).__fc = { game: this.fc, scene: this };
 
     // раскладка снизу вверх: кнопки, столбики, ряд ячеек и домов; всё — на столешнице
@@ -75,9 +81,9 @@ export class FreeCellScene extends Phaser.Scene {
     // четыре свободные ячейки слева, четыре дома справа
     const g = this.add.graphics();
     for (let i = 0; i < 4; i++) {
-      drawSlot(g, X0 + i * STEP, this.topY, CW, CH, 0.55);
-      drawSlot(g, X0 + (4 + i) * STEP, this.topY, CW, CH, 0.35);
-      this.add.image(persp.x(X0 + (4 + i) * STEP, this.topY), this.topY, 'suit_' + i).setAlpha(0.4).setScale(0.9 * persp.s(this.topY), 0.8 * persp.s(this.topY));
+      drawSlot(g, topX(i), this.topY, CW, CH, 0.55);
+      drawSlot(g, topX(4 + i), this.topY, CW, CH, 0.35);
+      this.add.image(persp.x(topX(4 + i), this.topY), this.topY, 'suit_' + i).setAlpha(0.4).setScale(0.9 * persp.s(this.topY), 0.8 * persp.s(this.topY));
     }
     for (let c = 0; c < 8; c++) drawSlot(g, X0 + c * STEP, this.tabY, CW, CH, 0.18);
 
@@ -102,10 +108,10 @@ export class FreeCellScene extends Phaser.Scene {
     const m = new Map<number, Placement>();
     const fc = this.fc;
     fc.cells.forEach((c, i) => {
-      if (c) m.set(cardId(c), { x: X0 + i * STEP, y: this.topY, depth: 100, up: true, angle: tableAngle(cardId(c)) });
+      if (c) m.set(cardId(c), { x: topX(i), y: this.topY, depth: 100, up: true, angle: tableAngle(cardId(c)) });
     });
     for (let suit = 0; suit < 4; suit++) {
-      for (let rank = 1; rank <= fc.found[suit]; rank++) m.set(cardId({ rank, suit }), { x: X0 + (4 + suit) * STEP, y: this.topY, depth: 200 + rank, up: true, angle: tableAngle(cardId({ rank, suit })) });
+      for (let rank = 1; rank <= fc.found[suit]; rank++) m.set(cardId({ rank, suit }), { x: topX(4 + suit), y: this.topY, depth: 200 + rank, up: true, angle: tableAngle(cardId({ rank, suit })) });
     }
     const room = this.tabBottom - (this.tabY - CH / 2);
     fc.cols.forEach((pile, col) => {
@@ -117,6 +123,8 @@ export class FreeCellScene extends Phaser.Scene {
   }
 
   private sync(): void {
+    this.flash.clear();
+    this.suggested = undefined;
     this.layer.apply(this.places());
     this.refreshHud();
   }
@@ -143,14 +151,15 @@ export class FreeCellScene extends Phaser.Scene {
     if (this.finished || this.busy) return;
     const src = this.locate(id);
     if (!src) return;
-    const dests = this.fc.destinations(src);
-    if (!dests.length) {
+    const suggested = this.suggested?.id === id ? this.suggested.to : undefined;
+    const to = suggested && this.fc.canMove(src, suggested) ? suggested : this.fc.destinations(src)[0];
+    if (!to) {
       sfx.no();
       this.layer.shake(id);
       return;
     }
-    this.fc.move(src, dests[0]);
-    sfx.card(dests[0].type === 'found' ? 3 : 0);
+    this.fc.move(src, to);
+    sfx.card(to.type === 'found' ? 3 : 0);
     this.sync();
     this.afterMove();
   }
@@ -159,6 +168,8 @@ export class FreeCellScene extends Phaser.Scene {
 
   /** Карта и правильная стопка на ней — поднимаются вместе. */
   private pickStack(id: number): Phaser.GameObjects.Image[] | null {
+    this.flash.clear();
+    this.suggested = undefined;
     const src = this.locate(id);
     if (!src) return null;
     const imgs = this.fc.cardsAt(src).map((c) => this.layer.get(cardId(c))!);
@@ -184,7 +195,15 @@ export class FreeCellScene extends Phaser.Scene {
   private dropStack(id: number, x: number, y: number): boolean {
     const src = this.locate(id);
     const to = this.destAt(x, y);
-    if (!src || !to || !this.fc.canMove(src, to)) return false;
+    if (!src || !to) return false;
+    if (!this.fc.canMove(src, to)) {
+      const cards = this.fc.cardsAt(src);
+      if (to.type === 'col' && cards.length > 1 && (src.type !== 'col' || src.col !== to.col)) {
+        const limit = this.fc.columnLimit(cards[0], to.col);
+        if (limit !== null && cards.length > limit) toast(this, t('freecell.stackLimit', { count: cards.length, limit }));
+      }
+      return false;
+    }
     this.fc.move(src, to);
     sfx.card(to.type === 'found' ? 3 : 0);
     this.sync();
@@ -199,6 +218,8 @@ export class FreeCellScene extends Phaser.Scene {
     if (fc.won) return this.onWin();
     if (fc.autoStep()) {
       this.busy = true;
+      this.flash.clear();
+      this.suggested = undefined;
       this.layer.apply(this.places());
       this.time.delayedCall(90, () => {
         this.busy = false;
@@ -251,11 +272,15 @@ export class FreeCellScene extends Phaser.Scene {
 
   private async tapHint(): Promise<void> {
     if (this.finished || this.busy) return;
+    this.flash.clear();
+    this.suggested = undefined;
     // если выиграть уже нельзя, подсказку не тратим, а сразу говорим об этом
     if (this.isDead()) {
       this.onStuck();
       return;
     }
+    const m = this.fc.hintMove();
+    if (!m) return;
     if (this.hintsLeft > 0) {
       this.hintsLeft--;
     } else {
@@ -266,13 +291,17 @@ export class FreeCellScene extends Phaser.Scene {
     }
     this.refreshHud();
     sfx.clue();
-    const m = this.fc.hintMove();
-    if (!m) return;
-    const ids = this.fc.cardsAt(m.from).map(cardId);
-    if (m.to.type === 'col') {
-      const pile = this.fc.cols[m.to.col];
-      if (pile.length) ids.push(cardId(pile[pile.length - 1]));
-    }
-    this.layer.pulse(ids);
+    const [lead, next] = this.fc.cardsAt(m.from);
+    const id = cardId(lead);
+    const source = hintCard(this.layer.get(id)!, next && this.layer.get(cardId(next)));
+    const pile = m.to.type === 'col' ? this.fc.cols[m.to.col] : undefined;
+    const target = pile?.[pile.length - 1];
+    const destination = target
+      ? hintCard(this.layer.get(cardId(target))!)
+      : m.to.type === 'col'
+        ? hintSlot(X0 + m.to.col * STEP, this.tabY, CW, CH)
+        : hintSlot(topX(m.to.type === 'found' ? lead.suit + 4 : this.fc.cells.indexOf(null)), this.topY, CW, CH);
+    this.suggested = { id, to: m.to };
+    this.flash.show(source, destination);
   }
 }

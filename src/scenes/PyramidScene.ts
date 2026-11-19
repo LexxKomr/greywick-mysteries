@@ -10,6 +10,7 @@ import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } 
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
+import { HintFlash, hintCard, hintSlot } from '../ui/hints';
 
 const PS = 1.2; // карты пирамиды крупнее обычных
 const STEP = 144;
@@ -29,6 +30,8 @@ export class PyramidScene extends Phaser.Scene {
   private wasteSprite!: Phaser.GameObjects.Image;
   private stockBacks: Phaser.GameObjects.Image[] = [];
   private stockEmpty!: Phaser.GameObjects.Graphics;
+  private recycleIcon!: Phaser.GameObjects.Image;
+  private flash!: HintFlash;
   private stockCount!: Phaser.GameObjects.Text;
   private passText!: Phaser.GameObjects.Text;
   private undo!: Helper;
@@ -67,6 +70,7 @@ export class PyramidScene extends Phaser.Scene {
     const seed = ctx.data.dailyDate ?? (number * 1000 + ctx.level);
     this.deal = generateRatedPyramid(seed, PYRAMID_TARGETS[Math.max(0, Math.min(2, difficulty - 1))]);
     this.py = new PyramidGame(this.deal);
+    this.flash = new HintFlash(this);
     (window as unknown as { __py: unknown }).__py = { game: this.py, deal: this.deal, scene: this };
 
     // раскладка снизу вверх: помощники, колода, пирамида — всё на столе
@@ -87,6 +91,7 @@ export class PyramidScene extends Phaser.Scene {
       enabled: () => !this.finished && !this.adBusy,
       pick: (spot) => {
         if (!this.py.cardAt(spot)) return null;
+        this.flash.clear();
         this.select(null);
         return [this.spriteOf(spot)];
       },
@@ -123,13 +128,7 @@ export class PyramidScene extends Phaser.Scene {
     this.stockEmpty = this.add.graphics();
     this.stockEmpty.lineStyle(5, C.brassLight, 0.5);
     this.stockEmpty.strokeRoundedRect(x - cw / 2, y - ch / 2, cw, ch, 18);
-    // круговая стрелка: колоду можно пройти ещё раз
-    this.stockEmpty.lineStyle(9, C.brassLight, 0.7);
-    this.stockEmpty.beginPath();
-    this.stockEmpty.arc(x, y, 34, Phaser.Math.DegToRad(200), Phaser.Math.DegToRad(110), false);
-    this.stockEmpty.strokePath();
-    this.stockEmpty.fillStyle(C.brassLight, 0.7);
-    this.stockEmpty.fillTriangle(x - 50, y - 22, x - 16, y - 32, x - 38, y + 8);
+    this.recycleIcon = this.add.image(x, y, 'glyph_recycle').setDisplaySize(cw * 0.77, cw * 0.77);
     for (let i = 0; i < 3; i++) {
       this.stockBacks.push(this.add.image(x - 14 + i * 7, y - 6 + i * 3, 'card_back').setScale(CARD_TEX_SCALE * BIG).setAngle(tableAngle(90 + i)));
     }
@@ -163,6 +162,7 @@ export class PyramidScene extends Phaser.Scene {
 
   private tapSpot(spot: Spot): void {
     if (this.finished || this.adBusy) return;
+    this.flash.clear();
     const card = this.py.cardAt(spot);
     if (!card) {
       if (spot !== 'waste' && this.py.pyramid[spot]) {
@@ -243,6 +243,7 @@ export class PyramidScene extends Phaser.Scene {
 
   private tapStock(): void {
     if (this.finished || this.adBusy) return;
+    this.flash.clear();
     this.select(null);
     const r = this.py.draw();
     if (r === null) {
@@ -276,6 +277,7 @@ export class PyramidScene extends Phaser.Scene {
 
   /** Приводит стол в соответствие с состоянием игры. */
   private sync(): void {
+    this.flash.clear();
     for (let i = 0; i < PYRAMID_SIZE; i++) {
       const s = this.sprites[i];
       this.tweens.killTweensOf(s);
@@ -299,6 +301,7 @@ export class PyramidScene extends Phaser.Scene {
     this.stockBacks[0].setVisible(n > 2);
     this.stockEmpty.setVisible(n === 0);
     this.stockEmpty.setAlpha(this.py.canDraw ? 1 : 0.35);
+    this.recycleIcon.setVisible(n === 0 && this.py.canDraw);
     this.passText.setText(t('game.pass', { n: this.py.pass, total: this.py.maxPasses }).replace(' ', '\n'));
     this.undo.setBadge(String(this.py.undosLeft));
     this.undo.setEnabled(this.py.canUndo);
@@ -320,6 +323,7 @@ export class PyramidScene extends Phaser.Scene {
 
   private async tapHint(): Promise<void> {
     if (this.finished || this.adBusy) return;
+    this.flash.clear();
     // сначала решатель: если выиграть уже нельзя, подсказку не тратим, а сразу говорим об этом
     const plan = solvePyramidFrom(this.py, 150_000);
     if (plan.result === false || this.py.status === 'lost') {
@@ -340,26 +344,12 @@ export class PyramidScene extends Phaser.Scene {
     sfx.clue();
     // ход из найденного решения; если решатель не успел — любой пара/король, иначе колода
     const first = plan.first ?? this.py.findRemoval() ?? 'draw';
-    if (first !== 'draw') {
-      for (const s of first.map((sp) => this.spriteOf(sp))) {
-        s.setTint(0xffd36b);
-        const base = s.scaleX;
-        this.tweens.add({ targets: s, scale: base * 1.12, duration: 220, yoyo: true, repeat: 2, onComplete: () => s.clearTint().setScale(base) });
-      }
+    if (first === 'draw') {
+      this.flash.show(hintSlot(this.stockPos.x, this.stockPos.y, CARD_W * BIG, CARD_H * BIG, true));
       return;
     }
-    if (this.py.stock.length > 0) {
-      const backs = this.stockBacks.filter((b) => b.visible);
-      for (const b of backs) {
-        b.setTint(0xffd36b);
-        const base = b.scaleX;
-        this.tweens.add({ targets: b, scale: base * 1.12, duration: 220, yoyo: true, repeat: 2, onComplete: () => b.clearTint().setScale(base) });
-      }
-    } else {
-      // колода пуста: подсказка — начать новый проход
-      toast(this, t('pyramid.hintRecycle'));
-      this.tweens.add({ targets: this.stockEmpty, alpha: 0.3, duration: 220, yoyo: true, repeat: 2, onComplete: () => this.stockEmpty.setAlpha(1) });
-    }
+    const [source, partner] = first;
+    this.flash.show(hintCard(this.spriteOf(source)), partner === undefined ? undefined : hintCard(this.spriteOf(partner)));
   }
 
   private async tapPlusPass(): Promise<void> {

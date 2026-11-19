@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { C, H, W } from '../config';
 import { createCardTextures } from '../ui/cards';
 
 // Все картинки из assets (сейчас — временные, из папки temp).
@@ -14,13 +13,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const bar = this.add.graphics();
+    const bar = document.getElementById('loading');
     this.load.on('progress', (p: number) => {
-      bar.clear();
-      bar.fillStyle(C.brassDark, 1);
-      bar.fillRoundedRect(W / 2 - 304, H / 2 - 14, 608, 28, 14);
-      bar.fillStyle(C.brassLight, 1);
-      bar.fillRoundedRect(W / 2 - 300, H / 2 - 10, Math.max(20, 600 * p), 20, 10);
+      bar?.style.setProperty('--loaded', `${p * 100}%`);
     });
     for (const path in urls) {
       const m = /([^/]+)\.(\w+)$/.exec(path)!;

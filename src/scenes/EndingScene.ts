@@ -2,11 +2,12 @@
 
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
+import { ads } from '../services/ads';
 import { getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
-import { ScrollArea, addBackground, drawStar, fadeIn, makeButton, panel, starsRow, txt } from '../ui/widgets';
+import { ScrollArea, addBackground, drawStar, fadeIn, makeButton, panel, roundButton, starsRow, txt } from '../ui/widgets';
 
 export class EndingScene extends Phaser.Scene {
   constructor() {
@@ -50,7 +51,7 @@ export class EndingScene extends Phaser.Scene {
       const subtitle = txt(this, 0, 0, t('ending.evidence'), 46, C.wine, { head: true, ox: 0, oy: 0, align: 'left' });
       area.add(subtitle, subtitle.height, 14);
       area.addParagraphs(selectedClues.map((clue) => clue.fact ?? clue.title), 40);
-      const link = c.links?.find((item) => item.clues.every((n) => evidence?.includes(n - 1)));
+      const link = right ? c.links?.find((item) => item.clues.every((n) => evidence?.includes(n - 1))) : undefined;
       if (link) area.addParagraphs([link.text], 42);
       area.addSpace(10);
     }
@@ -62,6 +63,16 @@ export class EndingScene extends Phaser.Scene {
       }
       area.addParagraphs(c.wrong[accused], 46);
       area.addSpace(10);
+    }
+    if (!right) {
+      roundButton(this, 82, 82, 50, 'back', () => this.scene.start('Map'));
+      const retry = makeButton(this, W / 2, H - 112, 820, 150, t('ending.retry'), () => {
+        retry.setEnabled(false);
+        void ads.showInterstitial().catch(() => {}).then(() => {
+          if (this.scene.isActive()) this.scene.start('Accuse', { caseId: c.id });
+        });
+      }, 'primary', 56);
+      return;
     }
     const head = this.add.container(0, 0);
     const line = this.add.graphics();

@@ -316,10 +316,11 @@ export function solveKlondikeFrom(src: KlondikeGame, nodeLimit = 30_000): { resu
     const top = p[p.length - 1];
     return top.up && top.rank === c.rank + 1 && isRed(top.suit) !== isRed(c.suit);
   };
-  // «запас» — все карты колоды и сброса; порядок держим постоянным, чтобы ключ был стабильным
+  // В корне сначала видимая карта сброса, затем карты в порядке их открытия.
+  const visible = src.waste[src.waste.length - 1];
   const start: St = {
     tab: src.tableau.map((p) => p.map((c) => ({ ...c }))),
-    talon: src.waste.slice().concat(src.stock.slice().reverse()),
+    talon: (visible ? [visible] : []).concat(src.stock.slice().reverse(), src.waste.slice(0, -1)),
     found: src.found.slice(),
   };
   const seen = new Set<string>();
@@ -355,10 +356,13 @@ export function solveKlondikeFrom(src: KlondikeGame, nodeLimit = 30_000): { resu
       }
     }
     const tried = new Set<number>();
-    for (const c of s.talon) {
+    for (const [index, c] of s.talon.entries()) {
       if (tried.has(id(c))) continue;
       tried.add(id(c));
-      if (s.found[c.suit] === c.rank - 1) moves.push({ mv: { kind: 'talon', card: c, to: { type: 'found' } }, w: 5 });
+      // Ход скрытой картой требует прокрутить колоду. Ставим такие ходы после доступных полезных ходов.
+      const delayed = depth === 0 && c !== visible;
+      const delayWeight = 1.8 - index / s.talon.length;
+      if (s.found[c.suit] === c.rank - 1) moves.push({ mv: { kind: 'talon', card: c, to: { type: 'found' } }, w: delayed ? delayWeight : 5 });
       let emptyDone = false;
       for (let d = 0; d < 7; d++) {
         if (!fitsCol(s, c, d)) continue;
@@ -366,7 +370,7 @@ export function solveKlondikeFrom(src: KlondikeGame, nodeLimit = 30_000): { resu
           if (emptyDone) continue;
           emptyDone = true;
         }
-        moves.push({ mv: { kind: 'talon', card: c, to: { type: 'tab', col: d } }, w: 3 });
+        moves.push({ mv: { kind: 'talon', card: c, to: { type: 'tab', col: d } }, w: delayed ? delayWeight : 3 });
       }
     }
     moves.sort((a, b) => b.w - a.w);

@@ -10,7 +10,7 @@
       body { background-size: cover; background-position: center; touch-action: none; -webkit-user-select: none; user-select: none; }
       #shade { position: fixed; inset: 0; background: rgba(12, 20, 26, 0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
       #game { position: fixed; inset: 0; }
-      #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: #e9dcc0; font: 20px Georgia, serif; }
+      #loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); box-sizing: border-box; display: grid; place-items: center; width: min(68vw, 330px); min-height: 56px; padding: 8px 18px; border: 2px solid #a87f48; border-radius: 19px; background: linear-gradient(90deg, #855532 var(--loaded, 0%), #202d33 var(--loaded, 0%)); color: #faf2dd; font: bold 20px/1.35 Georgia, serif; box-shadow: 0 3px 10px #0006; }
       #ad { position: fixed; inset: 0; z-index: 10; display: none; align-items: center; justify-content: center; background: rgba(8, 12, 16, 0.92); color: #f1e4c8; font: 28px Georgia, serif; text-align: center; padding: 24px; }
       #ad small { display: block; margin-top: 14px; font-size: 17px; opacity: 0.7; }
       .intro-film { position: fixed; z-index: 5; overflow: hidden; background: #10191e; }
@@ -22,7 +22,7 @@
   <body>
     <div id="shade"></div>
     <div id="game"></div>
-    <div id="loading">Загрузка…</div>
+    <div id="loading" role="status">Загрузка…</div>
     <div id="ad"><div><span id="ad-text"></span><small id="ad-note"></small></div></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

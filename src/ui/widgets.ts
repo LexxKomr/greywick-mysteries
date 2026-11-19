@@ -413,10 +413,11 @@ export function showDialog(scene: Scene, title: string, text: string, buttons: D
 
 /** Короткое сообщение внизу экрана. */
 export function toast(scene: Scene, message: string): void {
-  const t = txt(scene, W / 2, H - 330, message, 44, C.paperLight, { head: true });
+  const t = txt(scene, W / 2, H - 330, message, 39, C.paperLight, { head: true, wrap: W - 180, spacing: 3 });
   const bg = scene.add.graphics();
   bg.fillStyle(0x0a1014, 0.85);
-  bg.fillRoundedRect(W / 2 - t.width / 2 - 40, H - 330 - 50, t.width + 80, 100, 50);
+  const height = Math.max(90, t.height + 26);
+  bg.fillRoundedRect(W / 2 - t.width / 2 - 32, t.y - height / 2, t.width + 64, height, 32);
   bg.setDepth(950);
   t.setDepth(951);
   scene.tweens.add({ targets: [t, bg], alpha: 0, delay: 1500, duration: 400, onComplete: () => (t.destroy(), bg.destroy()) });

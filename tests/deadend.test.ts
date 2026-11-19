@@ -52,6 +52,16 @@ describe('пирамида: можно ли ещё выиграть', () => {
 });
 
 describe('косынка: можно ли ещё выиграть', () => {
+  it('предпочитает открытие закрытой карты лишнему прокручиванию колоды', () => {
+    const g = new KlondikeGame(1);
+    g.tableau = [
+      [{ rank: 2, suit: 0, up: false }, { rank: 8, suit: 1, up: true }],
+      [{ rank: 9, suit: 3, up: true }], [], [], [], [], [],
+    ];
+    g.stock = [{ rank: 1, suit: 3 }];
+    g.waste = [];
+    expect(solveKlondikeFrom(g).first).toEqual({ type: 'move', from: { type: 'tab', col: 0, index: 1 }, to: { type: 'tab', col: 1 } });
+  });
   it('ни одна раскладка дела не считается тупиком', () => {
     for (const band of KLONDIKE_SEEDS) {
       for (const seed of band) expect(solveKlondikeFrom(new KlondikeGame(seed), 3000).result).not.toBe(false);

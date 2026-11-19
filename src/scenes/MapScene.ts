@@ -3,7 +3,7 @@
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
 import { continueCase } from '../flow';
-import { CaseData, caseByNumber, caseState, world } from '../services/cases';
+import { CaseData, caseByNumber, caseState, caseUnlocked, world } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
@@ -73,19 +73,20 @@ export class MapScene extends Phaser.Scene {
 
     const firstOpen = world.slots.find((s) => {
       const c = caseByNumber(s.number);
-      return c && caseState(c) !== 'closed';
+      return c && caseUnlocked(s.number) && caseState(c) !== 'closed';
     });
     this.select(firstOpen?.number ?? 1);
   }
 
   /** Метка дела: медальон и табличка «Дело N · Улики · звёзды». (x, y) — центр медальона. */
   private addMarker(n: number, x: number, y: number): void {
-    const c = caseByNumber(n);
+    const unlocked = caseUnlocked(n);
+    const c = unlocked ? caseByNumber(n) : null;
     const state = c ? caseState(c) : null;
     const R = 66;
     const halo = makeMapHalo(this, x, y);
     const g = this.add.graphics();
-    const ribbonY = y - R - 21;
+    const ribbonY = y - R - 30;
     const half = c ? 88 : 73;
     const pts = [
       new Phaser.Math.Vector2(x - half, ribbonY - 23),
@@ -125,7 +126,7 @@ export class MapScene extends Phaser.Scene {
       const st = txt(this, x + 13, top + 55, t('map.starsShort', { n: save.totalStars(c.id, total), total: total * 3 }), 26, C.brassLight, { bold: true });
       drawStar(g, x - st.width / 2 - 7, top + 54, 12);
     } else {
-      txt(this, x, top + 21, t('map.soon'), 24, C.paper, { italic: true });
+      txt(this, x, top + 21, t(unlocked ? 'map.soon' : 'map.locked'), 24, C.paper, { italic: true });
     }
 
     const hitTop = ribbonY - 24;
@@ -150,10 +151,11 @@ export class MapScene extends Phaser.Scene {
       medal.setDisplaySize(selected && !locked ? 140 : 132, selected && !locked ? 140 : 132);
     });
     const c = caseByNumber(n);
+    const unlocked = caseUnlocked(n);
     this.infoTitle.setText(t('map.case', { n }));
-    if (!c) {
-      this.infoName.setText(t('map.soon')).setScale(1);
-      this.infoStatus.setText(t('map.soonText'));
+    if (!c || !unlocked) {
+      this.infoName.setText(t(unlocked ? 'map.soon' : 'map.locked')).setScale(1);
+      this.infoStatus.setText(t(unlocked ? 'map.soonText' : 'map.lockedText'));
       this.mainButton.setVisible(false);
       this.boardButton.setVisible(false);
       return;
@@ -174,7 +176,7 @@ export class MapScene extends Phaser.Scene {
   }
 
   private current(): CaseData | null {
-    return caseByNumber(this.selected);
+    return caseUnlocked(this.selected) ? caseByNumber(this.selected) : null;
   }
 
   private onMain(): void {
