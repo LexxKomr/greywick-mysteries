@@ -2,11 +2,11 @@
 
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
-import { getCase } from '../services/cases';
+import { AccusationDraft, getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
-import { startLevel } from '../flow';
+import { continueCase, startLevel } from '../flow';
 import { ScrollArea, addBackground, fadeIn, makeButton, panel, ribbon, starsRow, txt } from '../ui/widgets';
 
 interface ClueData {
@@ -15,6 +15,7 @@ interface ClueData {
   isNew?: boolean;
   stars?: number;
   from?: string;
+  accusation?: AccusationDraft;
 }
 
 export class ClueScene extends Phaser.Scene {
@@ -106,9 +107,16 @@ export class ClueScene extends Phaser.Scene {
     area.addParagraphs(clue.text, 46);
     area.addSpace(20);
 
-    const toBoard = () => this.scene.start('Board', { caseId: c.id, from: data.from, highlight: data.isNew ? data.index : undefined });
+    const toBoard = () => this.scene.start('Board', {
+      caseId: c.id,
+      from: data.from,
+      accusation: data.accusation,
+      highlight: data.isNew ? data.index : undefined,
+    });
     if (data.isNew) {
-      makeButton(this, W / 2, H - 112, 700, 150, t('clue.toBoard'), toBoard, 'primary', 60);
+      const finalClue = save.found(c.id, total) === total;
+      makeButton(this, 208, H - 112, 340, 140, t('clue.toBoard'), toBoard, 'paper', 46);
+      makeButton(this, 705, H - 112, 614, 140, t(finalClue ? 'board.accuse' : 'clue.next'), () => continueCase(this, c), 'primary', 49);
     } else {
       // пройденную партию можно переиграть ради звёзд
       makeButton(this, W / 2 - 250, H - 112, 480, 140, t('clue.replay'), () => void startLevel(this, c, data.index + 1), 'paper', 46);

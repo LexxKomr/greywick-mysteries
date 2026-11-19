@@ -181,7 +181,7 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
   setStars(3);
 
   // перед первой партией нового пасьянса Эдит коротко объясняет правила
-  if (!save.data.seen.includes(ctx.kind)) {
+  if (ctx.kind !== 'tripeaks' && !save.data.seen.includes(ctx.kind)) {
     scene.time.delayedCall(900, () => showIntro(scene, ctx.kind, () => save.markSeen(ctx.kind)));
   }
 

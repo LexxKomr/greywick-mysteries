@@ -8,6 +8,12 @@ export interface Clue {
   title: string;
   image: string;
   text: string[];
+  fact?: string;
+}
+
+export interface AccusationDraft {
+  suspectId: string;
+  evidence: number[];
 }
 
 export interface Suspect {
@@ -32,10 +38,13 @@ export interface CaseData {
   title: string;
   place: string;
   intro: string[];
+  opening?: string[];
   clues: Clue[];
   accuse: string[];
   suspects: Suspect[];
   culprit: string;
+  /** Связи, которые можно показать в развязке. Номера улик начинаются с единицы. */
+  links?: { clues: number[]; text: string }[];
   wrong: Record<string, string[]>;
   ending: string[];
   /** вид пасьянса для каждой партии (по номеру улики) */

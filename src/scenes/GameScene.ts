@@ -7,10 +7,11 @@ import { Deal, Game, TABLEAU_SIZE, makeBonusCards, rowOf, starsFor } from '../lo
 import { solveTriPeaksFrom } from '../logic/solver';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
+import { save } from '../services/save';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
 import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
-import { fadeIn, txt } from '../ui/widgets';
+import { drawPanel, fadeIn, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 
 const STEP = 106; // шаг карт по горизонтали
@@ -41,6 +42,11 @@ export class GameScene extends Phaser.Scene {
   private checkDead: (delay?: number) => void = () => {};
   private adBusy = false;
   private flyDepth = 200;
+  private firstMoveGuide?: {
+    layer: Phaser.GameObjects.Container;
+    frame: Phaser.GameObjects.Graphics;
+    label: Phaser.GameObjects.Text;
+  };
 
   constructor() {
     super('Game');
@@ -56,6 +62,7 @@ export class GameScene extends Phaser.Scene {
     this.hs = [];
     this.stockBacks = [];
     this.flyDepth = 200;
+    this.firstMoveGuide = undefined;
   }
 
   create(): void {
@@ -89,7 +96,40 @@ export class GameScene extends Phaser.Scene {
     this.streakText = txt(this, W / 2, peaksTop - 70, '', 64, C.gold, { head: true }).setAlpha(0).setDepth(150);
     this.streakText.setStroke('#2a1a10', 8);
     this.refreshHud();
-    this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.adBusy);
+    if (!save.data.seen.includes('tripeaks')) {
+      this.time.delayedCall(1100, () => this.showFirstMove());
+    }
+    this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.adBusy && !this.firstMoveGuide);
+  }
+
+  /** Первый ход подсказываем прямо на столе. Правила доступны через «?». */
+  private showFirstMove(): void {
+    if (this.finished || save.data.seen.includes('tripeaks')) return;
+    const frame = this.add.graphics();
+    const label = txt(this, W / 2, STRIP_H + 100, '', 40, C.ink, { wrap: 780, spacing: 4 });
+    const layer = this.add.container(0, 0, [frame, label]).setDepth(300);
+    this.firstMoveGuide = { layer, frame, label };
+    this.refreshFirstMove();
+  }
+
+  private refreshFirstMove(): void {
+    if (!this.firstMoveGuide) return;
+    const { frame, label } = this.firstMoveGuide;
+    const [card] = this.tp.playable();
+    const hasMatch = card !== undefined;
+    const target = hasMatch ? this.home[card] : this.stockPos;
+    const size = hasMatch ? this.hs[card] : BIG;
+    label.setText(t(hasMatch ? 'rules.firstPlay' : 'rules.firstDraw'));
+    frame.clear();
+    drawPanel(frame, 110, STRIP_H + 25, W - 220, 150, 26);
+    const border = (x: number, y: number, scale: number) => {
+      const w = CARD_W * scale + 12;
+      const h = CARD_H * scale + 12;
+      frame.lineStyle(7, C.gold, 1);
+      frame.strokeRoundedRect(x - w / 2, y - h / 2, w, h, 14);
+    };
+    border(target.x, target.y, size);
+    if (hasMatch) border(this.wastePos.x, this.wastePos.y, BIG);
   }
 
   // ---------- построение экрана ----------
@@ -182,6 +222,9 @@ export class GameScene extends Phaser.Scene {
     if (this.tp.canPlay(i)) {
       const card = this.tp.tableau[i]!;
       this.tp.play(i);
+      if (!save.data.seen.includes('tripeaks')) save.markSeen('tripeaks');
+      this.firstMoveGuide?.layer.destroy();
+      this.firstMoveGuide = undefined;
       sfx.card(this.tp.streak);
       s.disableInteractive();
       if (!this.faceUp[i]) s.setTexture(cardKey(card));
@@ -256,6 +299,7 @@ export class GameScene extends Phaser.Scene {
       }
     }
     this.refreshHud();
+    this.refreshFirstMove();
     if (this.tp.status === 'won') this.onWin();
     else this.checkDead();
   }
@@ -282,6 +326,7 @@ export class GameScene extends Phaser.Scene {
     }
     this.setWaste();
     this.refreshHud();
+    this.refreshFirstMove();
   }
 
   /** Верхняя карта сброса, чуть наискось — как положили. */

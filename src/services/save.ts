@@ -7,6 +7,8 @@ export interface CaseProgress {
   stars: number[];
   /** кого игрок назвал виновным; null = выбор ещё не сделан */
   accused: string | null;
+  /** Индексы двух улик, выбранных перед обвинением. */
+  evidence?: number[];
 }
 
 export interface SaveData {
@@ -126,8 +128,10 @@ class Save {
     if (this.data.wins % 2 === 0) this.data.adDue = true;
   }
 
-  accuse(caseId: string, suspectId: string, total: number): void {
-    this.progress(caseId, total).accused = suspectId;
+  accuse(caseId: string, suspectId: string, total: number, evidence: number[]): void {
+    const progress = this.progress(caseId, total);
+    progress.accused = suspectId;
+    progress.evidence = [...evidence];
     this.data.adDue = false;
     this.persist();
   }

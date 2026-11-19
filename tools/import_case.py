@@ -53,17 +53,31 @@ def main(n):
         head = head.strip()
         if head == 'ВСТУПЛЕНИЕ':
             case['intro'] = paragraphs(body)
+        elif head == 'КОРОТКОЕ ВСТУПЛЕНИЕ':
+            case['opening'] = paragraphs(body)
         elif head.startswith('УЛИКА '):
             num = int(re.match(r'УЛИКА (\d+)', head).group(1))
             lines = body.split('\n')
-            # служебные строки «Картинка:», «Указывает на:», «Снимает подозрение с:» игроку не показываем
-            while lines and (lines[0].strip() == '' or re.match(r'^(Картинка|Указывает на|Снимает подозрение с):', lines[0])):
-                lines.pop(0)
+            fact = ''
+            # Из строк перед рассказом на доску попадает только краткий факт.
+            while lines and (lines[0].strip() == '' or re.match(r'^(Картинка|Указывает на|Снимает подозрение с|Факт):', lines[0])):
+                line = lines.pop(0)
+                if line.startswith('Факт:'):
+                    fact = line.partition(':')[2].strip()
             assert num == len(case['clues']) + 1, head
             case['clues'].append({'title': meta['clueTitles'][num - 1], 'image': f'clue{num:02d}',
                                   'text': paragraphs('\n'.join(lines))})
+            if fact:
+                case['clues'][-1]['fact'] = fact
         elif head == 'ВЫБОР ВИНОВНОГО':
             case['accuse'] = [p for p in paragraphs(body) if not p.startswith('[')]
+        elif head == 'СВЯЗИ МЕЖДУ УЛИКАМИ':
+            case['links'] = []
+            for line in paragraphs(body):
+                a, b, explanation = re.fullmatch(r'(\d+) \+ (\d+): (.+)', line).groups()
+                clues = sorted((int(a), int(b)))
+                assert 1 <= clues[0] < clues[1] <= len(meta['clueTitles']), line
+                case['links'].append({'clues': clues, 'text': explanation})
         elif head.startswith('ЕСЛИ ВЫБРАН'):
             who = [s for s in meta['suspects'] if s['match'] in head]
             assert len(who) == 1, head

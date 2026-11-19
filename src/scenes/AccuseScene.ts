@@ -2,9 +2,8 @@
 
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
-import { getCase } from '../services/cases';
+import { AccusationDraft, getCase } from '../services/cases';
 import { t } from '../services/i18n';
-import { save } from '../services/save';
 import { sfx } from '../services/sfx';
 import { Button, addBackground, drawBack, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
 
@@ -21,7 +20,7 @@ export class AccuseScene extends Phaser.Scene {
     super('Accuse');
   }
 
-  create(data: { caseId: string }): void {
+  create(data: { caseId: string; accusation?: AccusationDraft }): void {
     fadeIn(this);
     const c = getCase(data.caseId);
     this.selected = null;
@@ -55,13 +54,21 @@ export class AccuseScene extends Phaser.Scene {
       this.cards[s.id] = this.makeCard(s.id, s.short, s.role, s.portrait, x, y, scale);
     });
 
-    makeButton(this, W / 2, H - 250, 560, 96, t('accuse.board'), () => this.scene.start('Board', { caseId: c.id, from: 'Accuse' }), 'dark', 40);
+    const draft = (): AccusationDraft | undefined => {
+      if (!this.selected) return undefined;
+      const evidence = data.accusation?.suspectId === this.selected ? data.accusation.evidence : [];
+      return { suspectId: this.selected, evidence };
+    };
+    makeButton(this, W / 2, H - 250, 560, 96, t('accuse.board'), () => this.scene.start('Board', {
+      caseId: c.id, from: 'Accuse', accusation: draft(),
+    }), 'dark', 40);
     this.confirm = makeButton(this, W / 2, H - 118, 820, 150, t('accuse.choose'), () => {
-      if (!this.selected) return;
-      save.accuse(c.id, this.selected, c.clues.length);
-      this.scene.start('Ending', { caseId: c.id, fresh: true });
+      const accusation = draft();
+      if (accusation) this.scene.start('Board', { caseId: c.id, from: 'Accuse', accusation, selectEvidence: true });
     }, 'primary', 56);
     this.confirm.setEnabled(false);
+    const suspectId = data.accusation?.suspectId;
+    if (suspectId && this.cards[suspectId]) this.pick(suspectId, scale);
   }
 
   private makeCard(id: string, name: string, role: string, portrait: string, x: number, y: number, scale: number): Phaser.GameObjects.Container {
@@ -125,6 +132,6 @@ export class AccuseScene extends Phaser.Scene {
       this.cards[k].setDepth(k === id ? 5 : 1);
       this.tweens.add({ targets: this.cards[k], scale: k === id ? scale * 1.04 : scale * 0.97, duration: 140 });
     }
-    this.confirm.setEnabled(true).setLabel(t('accuse.confirm'));
+    this.confirm.setEnabled(true).setLabel(t('accuse.pickEvidence'));
   }
 }

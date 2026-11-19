@@ -17,7 +17,7 @@ export class EndingScene extends Phaser.Scene {
     fadeIn(this);
     const c = getCase(data.caseId);
     const total = c.clues.length;
-    const accused = save.progress(c.id, total).accused;
+    const { accused, evidence } = save.progress(c.id, total);
     const right = accused === c.culprit;
     addBackground(this, 'bg_harbor', 0.55);
     if (data.fresh) (right ? sfx.win : sfx.lose)();
@@ -45,6 +45,15 @@ export class EndingScene extends Phaser.Scene {
     const bottom = H - 220;
     panel(this, 40, y, W - 80, bottom - y, 36);
     const area = new ScrollArea(this, 90, y + 50, W - 180, bottom - y - 100);
+    const selectedClues = (evidence ?? []).flatMap((index) => c.clues[index] ?? []);
+    if (selectedClues.length) {
+      const subtitle = txt(this, 0, 0, t('ending.evidence'), 46, C.wine, { head: true, ox: 0, oy: 0, align: 'left' });
+      area.add(subtitle, subtitle.height, 14);
+      area.addParagraphs(selectedClues.map((clue) => clue.fact ?? clue.title), 40);
+      const link = c.links?.find((item) => item.clues.every((n) => evidence?.includes(n - 1)));
+      if (link) area.addParagraphs([link.text], 42);
+      area.addSpace(10);
+    }
     if (!right && accused && c.wrong[accused]) {
       const who = c.suspects.find((s) => s.id === accused);
       if (who) {
