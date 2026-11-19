@@ -25,13 +25,21 @@ export class GolfGame {
   get won(): boolean { return this.columns.every((column) => !column.length); }
   get canUndo(): boolean { return this.undosLeft > 0 && this.history.length > 0; }
 
+  get stuck(): boolean {
+    return !this.won && this.stock.length === 0 && !this.columns.some((_, col) => this.canPlay(col));
+  }
+
+  private canPlay(col: number): boolean {
+    const column = this.columns[col];
+    const card = column?.[column.length - 1];
+    return !!card && adjacent(card.rank, this.top.rank);
+  }
+
   play(move: GolfMove): boolean {
     if (this.won) return false;
     if (move.type === 'play') {
-      const column = this.columns[move.col];
-      const card = column?.[column.length - 1];
-      if (!card || !adjacent(card.rank, this.top.rank)) return false;
-      this.waste.push(column.pop()!);
+      if (!this.canPlay(move.col)) return false;
+      this.waste.push(this.columns[move.col].pop()!);
     } else {
       if (!this.stock.length) return false;
       this.waste.push(this.stock.shift()!);

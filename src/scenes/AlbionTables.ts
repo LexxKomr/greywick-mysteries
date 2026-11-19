@@ -175,7 +175,7 @@ export class GolfScene extends AlbionTable {
     this.solutionCache = undefined;
     return this.gameState.undo();
   }
-  protected dead(): boolean { return this.solve().result === false; }
+  protected dead(): boolean { return this.gameState.stuck; }
   private solve() { return this.solutionCache ??= solveGolf(this.gameState); }
 
   protected renderCards(): void {
