@@ -86,13 +86,13 @@ export interface Button extends Phaser.GameObjects.Container {
   setLabel(s: string): Button;
 }
 
-/** Крупная скруглённая кнопка. (x, y) — центр. */
 interface ButtonArtwork {
   key: string;
-  labelOffsetX?: number;
+  labelMaxWidth?: number;
   labelOffsetY?: number;
 }
 
+/** Крупная скруглённая кнопка. (x, y) — центр. */
 export function makeButton(scene: Scene, x: number, y: number, w: number, h: number, label: string, onClick: () => void,
   style: ButtonStyle = 'paper', size?: number, artwork?: ButtonArtwork): Button {
   const r = Math.min(h / 2, 30);
@@ -122,9 +122,9 @@ export function makeButton(scene: Scene, x: number, y: number, w: number, h: num
       g.strokeRoundedRect(-w / 2 + 9, -h / 2 + 9, w - 18, h - 18, r - 9);
     }
   }
-  const offset = custom?.labelOffsetX ?? 0;
-  const text = txt(scene, offset, custom?.labelOffsetY ?? -3, label, size ?? Math.round(h * 0.42), textColor, { head: true });
-  const fit = () => text.setScale(Math.min(1, (w - 60 - 2 * Math.abs(offset)) / Math.max(1, text.width)));
+  const labelWidth = custom?.labelMaxWidth ?? w - 60;
+  const text = txt(scene, 0, custom?.labelOffsetY ?? -3, label, size ?? Math.round(h * 0.42), textColor, { head: true });
+  const fit = () => text.setScale(Math.min(1, labelWidth / Math.max(1, text.width)));
   fit();
   const c = scene.add.container(x, y, [...parts, text]) as Button;
   c.setSize(w, h);
