@@ -1,3 +1,5 @@
+import type { GameKind } from './cases';
+
 // Сохранения. Вся игра обращается только к этому модулю: позже хранилище
 // браузера (localStorage) заменится облаком Яндекса заменой одного объекта backend.
 
@@ -21,7 +23,7 @@ export interface SaveData {
   wins: number;
   /** пора показать межстраничную рекламу при следующем переходе */
   adDue: boolean;
-  daily: { date: number; stars: number } | null;
+  daily: { date: number; stars: number; kind?: GameKind } | null;
   /** пасьянсы, с которыми Эдит уже познакомила игрока */
   seen: string[];
 }
@@ -120,8 +122,11 @@ class Save {
     this.persist();
   }
 
-  winDaily(date: number, stars: number): void {
-    this.data.daily = { date, stars: Math.max(stars, this.data.daily?.date === date ? this.data.daily.stars : 0) };
+  winDaily(date: number, stars: number, kind: GameKind): void {
+    const last = this.data.daily;
+    if (!last || date >= last.date) {
+      this.data.daily = { date, stars: Math.max(stars, last?.date === date ? last.stars : 0), kind };
+    }
     this.countWin();
     this.persist();
   }

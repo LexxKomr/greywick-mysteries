@@ -7,7 +7,7 @@ import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 
@@ -64,7 +64,8 @@ export class PyramidScene extends Phaser.Scene {
     const ctx = this.ctx;
     const number = ctx.caseData?.number ?? 0;
     const difficulty = ctx.caseData?.levels?.[ctx.level - 1]?.difficulty ?? 2;
-    this.deal = generateRatedPyramid(number * 1000 + ctx.level, PYRAMID_TARGETS[Math.max(0, Math.min(2, difficulty - 1))]);
+    const seed = ctx.data.dailyDate ?? (number * 1000 + ctx.level);
+    this.deal = generateRatedPyramid(seed, PYRAMID_TARGETS[Math.max(0, Math.min(2, difficulty - 1))]);
     this.py = new PyramidGame(this.deal);
     (window as unknown as { __py: unknown }).__py = { game: this.py, deal: this.deal, scene: this };
 
@@ -108,9 +109,9 @@ export class PyramidScene extends Phaser.Scene {
       this.tweens.add({ targets: s, x, y, alpha: 1, duration: 280, delay: 40 + i * 24, ease: 'Cubic.easeOut' });
     }
 
-    this.undo = helperButton(this, W / 2 - 290, helpersY, t('game.undo'), '3', icons.undo, () => this.tapUndo());
-    this.hint = helperButton(this, W / 2, helpersY, t('game.hint'), String(FREE_HINTS), icons.hint, () => void this.tapHint());
-    helperButton(this, W / 2 + 290, helpersY, t('game.plusPass'), t('game.ad'), icons.plusCards, () => void this.tapPlusPass());
+    this.undo = helperButton(this, W / 2 - 290, helpersY, t('game.undo'), '3', 'undo', () => this.tapUndo());
+    this.hint = helperButton(this, W / 2, helpersY, t('game.hint'), String(FREE_HINTS), 'hint', () => void this.tapHint());
+    helperButton(this, W / 2 + 290, helpersY, t('game.plusPass'), t('game.ad'), 'plus_cards', () => void this.tapPlusPass());
     this.refreshHud();
     this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.adBusy);
   }

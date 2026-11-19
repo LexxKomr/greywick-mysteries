@@ -151,8 +151,9 @@ interface RoundButton extends Phaser.GameObjects.Container {
   setEnabled(enabled: boolean): void;
 }
 
-export function roundButton(scene: Scene, x: number, y: number, radius: number, draw: (g: G) => void, onClick: () => void): RoundButton {
-  const g = scene.add.graphics();
+export type ButtonGlyph = 'undo' | 'joker' | 'plus_cards' | 'hint' | 'home' | 'back' | 'rules' | 'close';
+
+export function roundButton(scene: Scene, x: number, y: number, radius: number, glyph: ButtonGlyph, onClick: () => void): RoundButton {
   const shadow = scene.add.graphics();
   shadow.fillStyle(0x000000, 0.4);
   shadow.fillCircle(2, 8, radius);
@@ -167,8 +168,9 @@ export function roundButton(scene: Scene, x: number, y: number, radius: number, 
     shadow.fillStyle(C.night, 1);
     shadow.fillCircle(0, 0, radius - 8);
   }
-  draw(g);
-  parts.push(g);
+  const size = radius * 1.2;
+  const icon = scene.add.image(0, 0, 'glyph_' + glyph).setDisplaySize(size, size);
+  parts.push(icon);
   const c = scene.add.container(x, y, parts) as RoundButton;
   c.setSize(radius * 2 + 16, radius * 2 + 16);
   c.setInteractive({ useHandCursor: true });
@@ -192,31 +194,11 @@ export function roundButton(scene: Scene, x: number, y: number, radius: number, 
     if (c.input!.enabled === enabled) return;
     if (enabled) c.setInteractive({ useHandCursor: true });
     else c.disableInteractive();
-    g.setAlpha(enabled ? 1 : 0.42);
+    icon.setAlpha(enabled ? 1 : 0.48);
     armed = false;
     c.setScale(1);
   };
   return c;
-}
-
-/** Значок «домик» для кнопки «в меню». */
-export function drawHome(g: G): void {
-  // домик ровно по центру кнопки: от -28 до +28 по высоте
-  g.fillStyle(C.paperLight, 1);
-  g.fillTriangle(-29, -2, 0, -28, 29, -2);
-  g.fillRect(-20, -4, 40, 32);
-  g.fillStyle(C.night, 1);
-  g.fillRect(-7, 10, 14, 18);
-}
-
-/** Значок «стрелка назад». */
-export function drawBack(g: G): void {
-  g.lineStyle(9, C.paperLight, 1);
-  g.beginPath();
-  g.moveTo(10, -24);
-  g.lineTo(-14, 0);
-  g.lineTo(10, 24);
-  g.strokePath();
 }
 
 export function starPoints(cx: number, cy: number, R: number): Phaser.Math.Vector2[] {

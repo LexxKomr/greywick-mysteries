@@ -8,7 +8,7 @@ import { AccusationDraft, caseState, Clue, getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
-import { drawBack, drawStar, fadeIn, makeButton, panel, roundButton, toast, txt } from '../ui/widgets';
+import { drawStar, fadeIn, makeButton, panel, roundButton, toast, txt } from '../ui/widgets';
 
 interface BoardData {
   caseId: string;
@@ -63,12 +63,12 @@ export class BoardScene extends Phaser.Scene {
       caseId: c.id,
       accusation: accusation(),
     });
-    roundButton(this, 82, 82, 50, drawBack, goBack);
+    roundButton(this, 82, 82, 50, 'back', goBack);
     const title = txt(this, W / 2, 62, t(suspect ? 'board.evidenceTitle' : 'board.title'), 70, C.paperLight, { head: true });
     title.setShadow(0, 4, '#000000', 10, false, true);
     const sub = txt(this, W / 2, 130, suspect?.name ?? c.title, 36, C.brassLight, { italic: true });
     sub.setShadow(0, 3, '#000000', 8, false, true);
-    if (c.opening && !suspect) {
+    if ((c.introFilm || c.opening) && !suspect) {
       makeButton(this, W - 145, 88, 226, 80, t('intro.boardLink'), () => this.scene.start('Intro', {
         caseId: c.id, full: true, board: { from: data.from, accusation: data.accusation },
       }), 'dark', 28);
@@ -79,8 +79,8 @@ export class BoardScene extends Phaser.Scene {
     const pad = 14;
     const cellW = (cork.x1 - cork.x0 - 2 * pad) / COLS;
     const cellH = (cork.y1 - cork.y0 - 2 * pad) / rows;
-    const noteW = Math.min(300, cellW - 24);
-    const noteH = Math.min(260, cellH - 20);
+    const noteW = Math.min(300, cellW - 34);
+    const noteH = Math.min(260, cellH - 23);
     const pins: { x: number; y: number; found: boolean }[] = [];
     const notes: ReturnType<BoardScene['makeNote']>[] = [];
     for (let i = 0; i < total; i++) {
@@ -106,22 +106,31 @@ export class BoardScene extends Phaser.Scene {
         }
         refreshEvidence();
       }));
-      pins.push({ x: cx, y: cy - noteH / 2 + 14, found: isFound });
+      pins.push({ x: cx, y: cy - noteH / 2 + 8, found: isFound });
     }
 
-    // Нить видна между листками и не перекрывает записи.
-    const thread = this.add.graphics().setDepth(9);
+    // Между рядами нить огибает край листков, а внутри ряда идёт над иллюстрациями.
+    const thread = this.add.graphics().setDepth(20);
     for (let i = 0; i + 1 < total; i++) {
       const a = pins[i];
       const b = pins[i + 1];
       if (!a.found || !b.found) continue;
-      const sag = Math.min(60, Math.hypot(b.x - a.x, b.y - a.y) * 0.12);
-      const curve = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(a.x, a.y), new Phaser.Math.Vector2((a.x + b.x) / 2, (a.y + b.y) / 2 + sag), new Phaser.Math.Vector2(b.x, b.y));
-      const pts = curve.getPoints(24);
-      thread.lineStyle(6, 0x000000, 0.28);
-      thread.strokePoints(pts.map((p) => new Phaser.Math.Vector2(p.x + 3, p.y + 5)));
-      thread.lineStyle(4, 0xa3202a, 1);
+      const start = new Phaser.Math.Vector2(a.x, a.y);
+      const end = new Phaser.Math.Vector2(b.x, b.y);
+      const sameRow = Math.floor(i / COLS) === Math.floor((i + 1) / COLS);
+      const leftSide = a.x < W / 2;
+      const lane = leftSide ? cork.x0 + 8 : cork.x1 - 8;
+      const turnX = lane + (leftSide ? 13 : -13);
+      const pts = sameRow
+        ? new Phaser.Curves.QuadraticBezier(start, new Phaser.Math.Vector2((a.x + b.x) / 2, (a.y + b.y) / 2 + 15), end).getPoints(18)
+        : [start, new Phaser.Math.Vector2(turnX, a.y), new Phaser.Math.Vector2(lane, a.y + 15),
+          new Phaser.Math.Vector2(lane, b.y - 15), new Phaser.Math.Vector2(turnX, b.y), end];
+      thread.lineStyle(10, 0x281019, 0.58);
+      thread.strokePoints(pts.map((p) => new Phaser.Math.Vector2(p.x + 2, p.y + 3)));
+      thread.lineStyle(6, 0x9f213c, 1);
       thread.strokePoints(pts);
+      thread.lineStyle(2, 0xec6982, 0.75);
+      thread.strokePoints(pts.map((p) => new Phaser.Math.Vector2(p.x - 1, p.y - 1)));
     }
     // кнопки-гвоздики — поверх нити
     const pg = this.add.graphics().setDepth(21);
@@ -136,15 +145,25 @@ export class BoardScene extends Phaser.Scene {
 
     if (data.highlight !== undefined && notes[data.highlight]) {
       const n = notes[data.highlight].cont;
-      n.setScale(1.25);
-      this.tweens.add({ targets: n, scale: 1, duration: 500, ease: 'Bounce.easeOut', delay: 200 });
+      n.setAlpha(0.55);
+      this.tweens.add({ targets: n, alpha: 1, duration: 550, ease: 'Sine.easeOut', delay: 150 });
     }
 
     // нижняя панель: прогресс и что делать дальше (закрывает край стола и кусок лампы)
     const panelTop = Math.max(cork.y1 + 40, H - 330);
     panel(this, 30, panelTop, W - 60, H - panelTop - 24, 30).setDepth(30);
     const status = txt(this, W / 2, panelTop + 52, t('board.found', { found, total }), 38, C.ink, { head: true }).setDepth(31);
-    if (found > 0) txt(this, W / 2, panelTop + 100, t(suspect ? 'board.evidenceHint' : 'board.hint'), 30, C.inkSoft, { italic: true, wrap: W - 140 }).setDepth(31);
+    if (found > 0) {
+      const recent = data.highlight ?? stars.map((n) => n > 0).lastIndexOf(true);
+      const summary = c.clues[recent]?.fact ?? t('board.hint');
+      const details = txt(this, W / 2, panelTop + 96, suspect ? t('board.evidenceHint') : summary, 29, C.inkSoft, {
+        italic: true, wrap: W - 140, spacing: 1,
+      }).setDepth(31);
+      if (!suspect) notes.forEach(({ cont }, i) => {
+        cont.on('pointerover', () => details.setText(c.clues[i].fact ?? summary));
+        cont.on('pointerout', () => details.setText(summary));
+      });
+    }
     const label = state === 'closed' ? t('board.ending') : state === 'accuse' ? t('board.accuse') : t('board.continue');
     const btnY = Math.min(H - 110, panelTop + 200);
     const action = makeButton(this, W / 2, btnY, 860, 140, suspect ? t('board.confirmAccusation') : label, () => {
@@ -196,20 +215,20 @@ export class BoardScene extends Phaser.Scene {
 
     if (found) {
       if (!selecting) {
-        for (let k = 0; k < 3; k++) drawStar(g, (k - 1) * 38, -h / 2 + 35, 12, k < starCount);
+        for (let k = 0; k < 3; k++) drawStar(g, (k - 1) * 32, h / 2 - 25, 11, k < starCount);
       }
       const textOnly = selecting && Boolean(clue.fact);
       if (!textOnly) {
-        const img = Math.round(h * (clue.fact ? 0.31 : 0.49));
-        cont.add(this.add.image(0, -h * 0.17, clue.image).setDisplaySize(img, img));
+        const img = Math.round(h * 0.42);
+        cont.add(this.add.image(0, -h * 0.205, clue.image).setDisplaySize(img, img));
       }
-      const titleY = textOnly ? -h * 0.17 : h * (clue.fact ? 0.035 : 0.31);
-      const title = txt(this, 0, titleY, clue.title, textOnly ? 30 : 26, C.wine, { head: true, wrap: w - 24, spacing: -4 });
-      title.setScale(Math.min(1, h * (textOnly ? 0.28 : 0.22) / title.height));
+      const titleY = textOnly ? -h * 0.17 : h * 0.155;
+      const title = txt(this, 0, titleY, clue.title, textOnly ? 30 : 25, C.wine, { head: true, wrap: w - 30, spacing: -4 });
+      title.setScale(Math.min(1, h * (textOnly ? 0.28 : 0.30) / title.height));
       cont.add(title);
-      if (clue.fact) {
-        const fact = txt(this, 0, h * (textOnly ? 0.2 : 0.31), clue.fact, textOnly ? 33 : 25, C.ink, { wrap: w - 24, spacing: -5 });
-        fact.setScale(Math.min(1, h * (textOnly ? 0.48 : 0.34) / fact.height));
+      if (textOnly) {
+        const fact = txt(this, 0, h * 0.2, clue.fact!, 32, C.ink, { wrap: w - 32, spacing: -4 });
+        fact.setScale(Math.min(1, h * 0.47 / fact.height));
         cont.add(fact);
       }
       cont.setSize(w, h);

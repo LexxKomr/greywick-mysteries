@@ -39,7 +39,7 @@ export interface CaseData {
   place: string;
   intro: string[];
   opening?: string[];
-  introComic?: { image: string; paragraphs: number[] }[];
+  introFilm?: string;
   clues: Clue[];
   accuse: string[];
   suspects: Suspect[];

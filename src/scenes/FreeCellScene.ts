@@ -3,14 +3,15 @@
 import Phaser from 'phaser';
 import { H, W } from '../config';
 import { FDest, FSource, FreeCellGame, freecellStars, freecellDead } from '../logic/freecell';
-import { freecellSeed } from '../logic/seeds';
+import { dailyPreset } from '../logic/daily';
+import { FREECELL_SEEDS, freecellSeed } from '../logic/seeds';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
 import { CardDrag } from '../ui/drag';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn } from '../ui/widgets';
 
 const CS = 1.2;
@@ -52,7 +53,10 @@ export class FreeCellScene extends Phaser.Scene {
     fadeIn(this);
     const ctx = this.ctx;
     const difficulty = ctx.caseData?.levels?.[ctx.level - 1]?.difficulty ?? 1;
-    this.fc = new FreeCellGame(freecellSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty));
+    const seed = ctx.data.dailyDate === undefined
+      ? freecellSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty)
+      : dailyPreset(ctx.data.dailyDate, FREECELL_SEEDS[0]);
+    this.fc = new FreeCellGame(seed);
     (window as unknown as { __fc: unknown }).__fc = { game: this.fc, scene: this };
 
     // раскладка снизу вверх: кнопки, столбики, ряд ячеек и домов; всё — на столешнице
@@ -86,8 +90,8 @@ export class FreeCellScene extends Phaser.Scene {
     this.layer = new CardLayer(this, CS, { x: W / 2, y: this.topY }, (img, id) => drag.add(img, id));
     this.layer.apply(this.places(), true, 12);
 
-    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, icons.undo, () => this.tapUndo());
-    this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), icons.hint, () => void this.tapHint());
+    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, 'undo', () => this.tapUndo());
+    this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), 'hint', () => void this.tapHint());
     this.refreshHud();
     this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.busy);
     // тузы, лежащие сверху, сразу уходят в дома

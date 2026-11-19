@@ -6,21 +6,21 @@ import { continueCase } from '../flow';
 import { AccusationDraft, getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
-import { ScrollArea, addBackground, drawBack, fadeIn, makeButton, panel, roundButton, txt } from '../ui/widgets';
-import { playIntroComic } from '../ui/introComic';
+import { ScrollArea, addBackground, fadeIn, makeButton, panel, roundButton, txt } from '../ui/widgets';
+import { introFilmUrl, playIntroFilm } from '../ui/introFilm';
 
 export class IntroScene extends Phaser.Scene {
   constructor() {
     super('Intro');
   }
 
-  create(data: { caseId: string; full?: boolean; board?: { from?: string; accusation?: AccusationDraft } }): void {
+  create(data: { caseId: string; full?: boolean; filmUnavailable?: boolean; board?: { from?: string; accusation?: AccusationDraft } }): void {
     fadeIn(this);
     const c = getCase(data.caseId);
     addBackground(this, 'bg_harbor', 0.45);
     const back = () => {
       if (data.board) this.scene.start('Board', { caseId: c.id, ...data.board });
-      else if (data.full) this.scene.restart({ caseId: c.id });
+      else if (data.full && !data.filmUnavailable) this.scene.restart({ caseId: c.id });
       else this.scene.start('Map');
     };
     const start = () => {
@@ -28,20 +28,18 @@ export class IntroScene extends Phaser.Scene {
       save.markIntroSeen(c.id, c.clues.length);
       continueCase(this, c);
     };
+    const film = c.introFilm && !data.filmUnavailable ? introFilmUrl(c.introFilm) : undefined;
+    if (film) {
+      playIntroFilm(this, film, start, () => this.scene.restart({ ...data, full: true, filmUnavailable: true }));
+      return;
+    }
 
     txt(this, W / 2, 72, t('map.case', { n: c.number }), 44, C.brassLight, { head: true });
     const title = txt(this, W / 2, 158, c.title, 76, C.paperLight, { head: true });
     title.setScale(Math.min(1, (W - 220) / title.width));
     title.setShadow(0, 4, '#000000', 10, false, true);
 
-    if (c.introComic?.length) {
-      const frames = c.introComic.map(({ image, paragraphs }) => ({ image, paragraphs: paragraphs.map((i) => c.intro[i]) }));
-      const previous = playIntroComic(this, frames, Boolean(data.board), start);
-      roundButton(this, 82, 82, 50, drawBack, () => { if (!previous()) back(); });
-      return;
-    }
-
-    roundButton(this, 82, 82, 50, drawBack, back);
+    roundButton(this, 82, 82, 50, 'back', back);
     const short = !data.full && c.opening;
     const top = short ? Math.round(H * 0.26) : 240;
     const bottom = short ? H - 390 : H - 230;

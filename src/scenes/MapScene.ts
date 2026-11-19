@@ -7,7 +7,7 @@ import { CaseData, caseByNumber, caseState, world } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
-import { Button, drawHome, drawPanel, drawStar, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
+import { Button, drawPanel, drawStar, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
 
 export class MapScene extends Phaser.Scene {
   private selected = 1;
@@ -32,7 +32,7 @@ export class MapScene extends Phaser.Scene {
     // заголовок прямо на бумаге карты
     txt(this, W / 2, 66, world.town, 80, C.wine, { head: true });
     txt(this, W / 2, 136, world.date, 36, C.inkSoft, { italic: true });
-    roundButton(this, 82, 82, 50, drawHome, () => this.scene.start('Menu'));
+    roundButton(this, 82, 82, 50, 'home', () => this.scene.start('Menu'));
 
     // подписи мест
     for (const p of world.places) {
@@ -101,12 +101,10 @@ export class MapScene extends Phaser.Scene {
     g.fillCircle(x, y, R);
     g.fillStyle(c ? C.brassLight : 0x8d949a, 1);
     g.fillCircle(x, y, R - 5);
-    g.fillStyle(c ? (state === 'closed' ? C.wine : C.gold) : 0x5d666d, 1);
+    g.fillStyle(c ? (state === 'closed' ? C.wine : C.night) : 0x5d666d, 1);
     g.fillCircle(x, y, R - 14);
     if (c) {
-      g.lineStyle(8, state === 'closed' ? C.paperLight : C.wineDark, 1);
-      g.strokeCircle(x - 5, y - 6, 18);
-      g.lineBetween(x + 8, y + 8, x + 23, y + 23);
+      this.add.image(x, y, 'glyph_search').setDisplaySize(63, 63);
     } else {
       g.lineStyle(7, 0xd4d9dc, 1);
       g.beginPath();

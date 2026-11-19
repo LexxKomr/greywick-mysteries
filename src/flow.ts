@@ -4,6 +4,8 @@ import Phaser from 'phaser';
 import { ads } from './services/ads';
 import { CaseData, caseState } from './services/cases';
 import { save } from './services/save';
+import { dailyKind } from './logic/daily';
+import { dailySeed } from './logic/generator';
 
 /** Какой экран играет какой пасьянс. Пока пасьянс не готов, вместо него идут «Три пика». */
 const SCENES: Record<string, string> = { tripeaks: 'Game', pyramid: 'Pyramid', klondike: 'Klondike', freecell: 'FreeCell' };
@@ -25,10 +27,13 @@ export async function startLevel(scene: Phaser.Scene, c: CaseData, level: number
 
 export async function startDaily(scene: Phaser.Scene): Promise<void> {
   if (switching) return;
+  const day = dailySeed();
+  const completed = save.data.daily;
+  const kind = completed?.date === day ? (completed.kind ?? 'tripeaks') : dailyKind(day);
   switching = true;
   await ads.interstitialIfDue();
   switching = false;
-  scene.scene.start('Game', { mode: 'daily' });
+  scene.scene.start(SCENES[kind], { mode: 'daily', dailyDate: day });
 }
 
 /** Выход после партии (в меню или к доске): тоже подходящее место для рекламы. */

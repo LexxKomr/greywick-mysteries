@@ -178,6 +178,6 @@ export function dailySeed(date = new Date()): number {
   return date.getFullYear() * 10000 + (date.getMonth() + 1) * 100 + date.getDate();
 }
 
-export function dealForDaily(date = new Date()): Deal {
-  return generateRatedDeal(dailySeed(date), DAILY_TARGET);
+export function dealForDaily(date: Date | number = new Date()): Deal {
+  return generateRatedDeal(typeof date === 'number' ? date : dailySeed(date), DAILY_TARGET);
 }

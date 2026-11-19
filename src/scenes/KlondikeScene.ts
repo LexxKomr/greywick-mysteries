@@ -3,14 +3,15 @@
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
 import { KDest, KSource, KlondikeGame, klondikeStars, solveKlondikeFrom } from '../logic/klondike';
-import { klondikeSeed } from '../logic/seeds';
+import { dailyPreset } from '../logic/daily';
+import { KLONDIKE_SEEDS, klondikeSeed } from '../logic/seeds';
 import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
 import { CardDrag } from '../ui/drag';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
 const CS = 1.3; // карты крупнее: столбиков всего семь
@@ -52,7 +53,10 @@ export class KlondikeScene extends Phaser.Scene {
     fadeIn(this);
     const ctx = this.ctx;
     const difficulty = ctx.caseData?.levels?.[ctx.level - 1]?.difficulty ?? 1;
-    this.kg = new KlondikeGame(klondikeSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty));
+    const seed = ctx.data.dailyDate === undefined
+      ? klondikeSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty)
+      : dailyPreset(ctx.data.dailyDate, KLONDIKE_SEEDS[1]);
+    this.kg = new KlondikeGame(seed);
     (window as unknown as { __kl: unknown }).__kl = { game: this.kg, scene: this };
 
     // раскладка снизу вверх: кнопки, столбики, ряд домов и колоды; всё — на столешнице
@@ -99,8 +103,8 @@ export class KlondikeScene extends Phaser.Scene {
     this.layer = new CardLayer(this, CS, { x: sx, y: this.topY }, (img, id) => drag.add(img, id));
     this.layer.apply(this.places(), true, 14);
 
-    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, icons.undo, () => this.tapUndo());
-    this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), icons.hint, () => void this.tapHint());
+    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, 'undo', () => this.tapUndo());
+    this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), 'hint', () => void this.tapHint());
     this.refreshHud();
     this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.busy);
   }

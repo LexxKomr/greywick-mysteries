@@ -425,27 +425,5 @@
       ]
     }
   ],
-  "introComic": [
-    {
-      "image": "comic_lighthouse",
-      "paragraphs": [
-        0,
-        1
-      ]
-    },
-    {
-      "image": "comic_pennock",
-      "paragraphs": [
-        2
-      ]
-    },
-    {
-      "image": "comic_edith",
-      "paragraphs": [
-        3,
-        4,
-        5
-      ]
-    }
-  ]
+  "introFilm": "lighthouse-intro.mp4"
 }

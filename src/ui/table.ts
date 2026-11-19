@@ -6,17 +6,18 @@ import { C, H, W } from '../config';
 import { toMenuAfterGame } from '../flow';
 import { dailySeed } from '../logic/generator';
 import { CaseData, GameKind, getCase } from '../services/cases';
-import { attachThoughts, showIntro, showRules } from './edith';
+import { attachThoughts, rulesFor, showIntro, showRules } from './edith';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
 import tablesData from '../data/tables.json';
-import { DialogButton, dialogsOpen, drawHome, drawStar, roundButton, showDialog, starsRow, txt } from './widgets';
+import { ButtonGlyph, DialogButton, dialogsOpen, drawStar, roundButton, showDialog, starsRow, txt } from './widgets';
 
 export interface LevelData {
   mode: 'case' | 'daily';
   caseId?: string;
   level?: number;
+  dailyDate?: number;
 }
 
 export interface LevelCtx {
@@ -33,6 +34,7 @@ export interface LevelCtx {
 }
 
 export function levelCtx(sceneKey: string, data: LevelData): LevelCtx {
+  if (data.mode === 'daily' && data.dailyDate === undefined) data = { ...data, dailyDate: dailySeed() };
   const caseData = data.caseId ? getCase(data.caseId) : null;
   const level = data.level ?? 1;
   const total = caseData?.clues.length ?? 12;
@@ -160,18 +162,16 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
   g.fillRect(0, 0, W, STRIP_H);
   g.fillStyle(C.brass, 0.9);
   g.fillRect(0, STRIP_H - 3, W, 3);
-  roundButton(scene, 56, STRIP_H / 2 - 2, 38, (ig) => {
-    ig.setScale(0.6);
-    drawHome(ig);
-  }, onHome).setDepth(401);
+  roundButton(scene, 56, STRIP_H / 2 - 2, 38, 'home', onHome).setDepth(401);
 
-  const title = ctx.mode === 'case' ? `${t('map.caseShort', { n: ctx.caseData!.number })} · ${t('game.clue', { n: ctx.level, total: ctx.total })}` : t('game.daily');
+  const title = ctx.mode === 'case'
+    ? `${t('map.caseShort', { n: ctx.caseData!.number })} · ${t('game.clue', { n: ctx.level, total: ctx.total })}`
+    : `${t('game.daily')} · ${rulesFor(ctx.kind).name}`;
   const tt = txt(scene, W / 2 - 30, STRIP_H / 2 - 4, title, 42, C.brassLight, { head: true }).setDepth(401);
   tt.setScale(Math.min(1, 560 / tt.width));
 
   // кнопка «Правила»
-  roundButton(scene, W - 226, STRIP_H / 2 - 2, 34, () => {}, () => showRules(scene, ctx.kind)).setDepth(401);
-  txt(scene, W - 226, STRIP_H / 2 - 9, '?', 46, C.paperLight, { head: true }).setDepth(402);
+  roundButton(scene, W - 226, STRIP_H / 2 - 2, 34, 'rules', () => showRules(scene, ctx.kind)).setDepth(401);
 
   const stars = scene.add.graphics().setDepth(401);
   const setStars = (n: number) => {
@@ -198,8 +198,8 @@ export interface Helper {
 }
 
 /** Кнопка помощника с подписью и жетоном оставшихся использований. */
-export function helperButton(scene: Phaser.Scene, x: number, y: number, label: string, badge: string | null, draw: (g: Phaser.GameObjects.Graphics) => void, onClick: () => void): Helper {
-  const button = roundButton(scene, x, y, 80, draw, onClick);
+export function helperButton(scene: Phaser.Scene, x: number, y: number, label: string, badge: string | null, glyph: ButtonGlyph, onClick: () => void): Helper {
+  const button = roundButton(scene, x, y, 80, glyph, onClick);
   const lt = txt(scene, x, y + 108, label, 36, C.paperLight, { head: true });
   lt.setShadow(0, 3, '#000000', 8, false, true);
   const bg = scene.add.graphics();
@@ -231,58 +231,6 @@ export function helperButton(scene: Phaser.Scene, x: number, y: number, label: s
   };
 }
 
-/** Значки помощников. */
-export const icons = {
-  undo(g: Phaser.GameObjects.Graphics): void {
-    // круговая стрелка против часовой: дуга с разрывом слева вверху, наконечник на её конце
-    const R = 26;
-    const a0 = Phaser.Math.DegToRad(250); // конец со стрелкой (вверху)
-    const a1 = Phaser.Math.DegToRad(165); // хвост (слева)
-    g.lineStyle(10, C.paperLight, 1);
-    g.beginPath();
-    g.arc(0, 2, R, a0, a1, false);
-    g.strokePath();
-    // наконечник: смотрит по ходу «против часовой» в точке a0
-    const px = Math.cos(a0) * R;
-    const py = 2 + Math.sin(a0) * R;
-    const dx = Math.sin(a0);
-    const dy = -Math.cos(a0);
-    const nx = -dy;
-    const ny = dx;
-    g.fillStyle(C.paperLight, 1);
-    g.fillTriangle(px + dx * 17, py + dy * 17, px - dx * 4 + nx * 15, py - dy * 4 + ny * 15, px - dx * 4 - nx * 15, py - dy * 4 - ny * 15);
-  },
-  joker(g: Phaser.GameObjects.Graphics): void {
-    g.fillStyle(C.gold, 1);
-    const pts: Phaser.Math.Vector2[] = [];
-    for (let i = 0; i < 10; i++) {
-      const r = i % 2 === 0 ? 38 : 16;
-      const a = -Math.PI / 2 + (i * Math.PI) / 5;
-      pts.push(new Phaser.Math.Vector2(Math.cos(a) * r, Math.sin(a) * r + 2));
-    }
-    g.fillPoints(pts, true);
-  },
-  plusCards(g: Phaser.GameObjects.Graphics): void {
-    g.fillStyle(C.paperLight, 1);
-    g.fillRoundedRect(-30, -34, 44, 60, 7);
-    g.fillStyle(C.wood, 1);
-    g.fillRoundedRect(-12, -24, 48, 64, 8);
-    g.fillStyle(C.paperLight, 1);
-    g.fillRoundedRect(-9, -21, 42, 58, 6);
-    g.fillStyle(C.wine, 1);
-    g.fillRect(8, -6, 8, 30);
-    g.fillRect(-3, 5, 30, 8);
-  },
-  hint(g: Phaser.GameObjects.Graphics): void {
-    // лампочка
-    g.fillStyle(C.gold, 1);
-    g.fillCircle(0, -8, 26);
-    g.fillRoundedRect(-13, 12, 26, 12, 3);
-    g.fillStyle(C.paperLight, 1);
-    g.fillRoundedRect(-11, 27, 22, 9, 3);
-  },
-};
-
 /** Партия выиграна: звёзды, сохранение и переход (улика, доска или меню). */
 export function winLevel(scene: Phaser.Scene, ctx: LevelCtx, stars: number): void {
   sfx.win();
@@ -308,7 +256,7 @@ export function winLevel(scene: Phaser.Scene, ctx: LevelCtx, stars: number): voi
       showDialog(scene, t('game.won'), text, [{ label: t('game.toBoard'), style: 'primary', onClick: () => void toMenuAfterGame(scene, 'Board', { caseId: c.id, highlight: ctx.level - 1 }) }], withStars);
     });
   } else {
-    save.winDaily(dailySeed(), stars);
+    save.winDaily(ctx.data.dailyDate!, stars, ctx.kind);
     scene.time.delayedCall(900, () => {
       banner.destroy();
       showDialog(scene, t('game.dailyWon'), t('game.dailyWonText'), [{ label: t('game.toMenu'), style: 'primary', onClick: () => void toMenuAfterGame(scene) }], withStars);

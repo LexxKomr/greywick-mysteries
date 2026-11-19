@@ -49,11 +49,7 @@ export function showRules(scene: Phaser.Scene, kind: GameKind): void {
     for (const o of [shade, g, swallow, title, line, x]) o.destroy();
     area.destroy();
   };
-  const x = roundButton(scene, px + pw - 78, py + 82, 44, (ig) => {
-    ig.lineStyle(9, C.paperLight, 1);
-    ig.lineBetween(-15, -15, 15, 15);
-    ig.lineBetween(15, -15, -15, 15);
-  }, close).setDepth(903);
+  const x = roundButton(scene, px + pw - 78, py + 82, 44, 'close', close).setDepth(903);
   shade.on('pointerup', () => {
     sfx.click();
     close();

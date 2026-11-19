@@ -10,7 +10,7 @@ import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, icons, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
 import { drawPanel, fadeIn, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 
@@ -69,7 +69,7 @@ export class GameScene extends Phaser.Scene {
     fadeIn(this);
     const ctx = this.ctx;
     const spec = ctx.caseData?.levels?.[ctx.level - 1];
-    if (ctx.mode !== 'case') this.deal = dealForDaily();
+    if (ctx.mode !== 'case') this.deal = dealForDaily(ctx.data.dailyDate);
     else if (spec?.game === 'tripeaks') this.deal = dealForBlock(ctx.caseData!.number, ctx.level, spec.difficulty);
     else this.deal = dealForLevel(ctx.caseData!.number, ctx.level, ctx.total); // пасьянс этой партии ещё не готов
     this.tp = new Game(this.deal);
@@ -212,9 +212,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   private buildHelpers(y: number): void {
-    this.undo = helperButton(this, W / 2 - 290, y, t('game.undo'), '3', icons.undo, () => this.tapUndo());
-    helperButton(this, W / 2, y, t('game.joker'), t('game.ad'), icons.joker, () => void this.tapJoker());
-    helperButton(this, W / 2 + 290, y, t('game.plus5'), t('game.ad'), icons.plusCards, () => void this.tapPlus5());
+    this.undo = helperButton(this, W / 2 - 290, y, t('game.undo'), '3', 'undo', () => this.tapUndo());
+    helperButton(this, W / 2, y, t('game.joker'), t('game.ad'), 'joker', () => void this.tapJoker());
+    helperButton(this, W / 2 + 290, y, t('game.plus5'), t('game.ad'), 'plus_cards', () => void this.tapPlus5());
   }
 
   // ---------- ходы ----------

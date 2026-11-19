@@ -10,11 +10,7 @@ META = {
     1: {
         'title': 'Последний огонь маяка',
         'place': 'Маяк',
-        'introComic': [
-            {'image': 'comic_lighthouse', 'paragraphs': [0, 1]},
-            {'image': 'comic_pennock', 'paragraphs': [2]},
-            {'image': 'comic_edith', 'paragraphs': [3, 4, 5]},
-        ],
+        'introFilm': 'lighthouse-intro.mp4',
         'clueTitles': [
             'Бутылка коньяка', 'Доктор Марш', 'Ссора у гостиницы', 'Сиреневый шарф',
             'Закладка в лоции', 'Срезанные страницы', 'Часы у рыбака', 'Тайна вдовы',
@@ -99,10 +95,8 @@ def main(n):
             case['thoughts'].append({'after': int(m.group(2) or 0), 'lines': lines})
         assert len(case['thoughts']) == len(meta['clueTitles']) + 1, 'блоков мыслей: %d' % len(case['thoughts'])
     assert case['intro'] and case['ending'] and case['accuse'], 'не все разделы найдены'
-    if 'introComic' in meta:
-        comic = meta['introComic']
-        assert [i for frame in comic for i in frame['paragraphs']] == list(range(len(case['intro'])))
-        case['introComic'] = comic
+    if 'introFilm' in meta:
+        case['introFilm'] = meta['introFilm']
     assert len(case['clues']) == len(meta['clueTitles']), 'улик: %d' % len(case['clues'])
     wrong_ids = {s['id'] for s in meta['suspects']} - {meta['culprit']}
     assert set(case['wrong']) == wrong_ids, case['wrong'].keys()

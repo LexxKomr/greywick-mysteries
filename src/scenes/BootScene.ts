@@ -3,7 +3,10 @@ import { C, H, W } from '../config';
 import { createCardTextures } from '../ui/cards';
 
 // Все картинки из assets (сейчас — временные, из папки temp).
-const urls = import.meta.glob('../../assets/**/*.{jpg,png,svg,webp}', { eager: true, query: '?url&no-inline', import: 'default' }) as Record<string, string>;
+const urls = import.meta.glob(
+  ['../../assets/**/*.{jpg,png,svg,webp}', '!../../assets/art/comic_*.webp'],
+  { eager: true, query: '?url&no-inline', import: 'default' },
+) as Record<string, string>;
 
 export class BootScene extends Phaser.Scene {
   constructor() {

@@ -5,7 +5,7 @@ import { C, H, W } from '../config';
 import { AccusationDraft, getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
-import { Button, addBackground, drawBack, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
+import { Button, addBackground, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
 
 const CARD_W = 470;
 const CARD_H = 700;
@@ -27,7 +27,7 @@ export class AccuseScene extends Phaser.Scene {
     this.frames = {};
     this.cards = {};
     addBackground(this, 'bg_harbor', 0.55);
-    roundButton(this, 82, 82, 50, drawBack, () => this.scene.start('Map'));
+    roundButton(this, 82, 82, 50, 'back', () => this.scene.start('Map'));
 
     // тёмная табличка с вопросом
     const g = this.add.graphics();
