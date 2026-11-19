@@ -75,13 +75,16 @@ export class EndingScene extends Phaser.Scene {
       return;
     }
     const head = this.add.container(0, 0);
-    const line = this.add.graphics();
     const aw = W - 180 - 28;
+    const heading = txt(this, aw / 2, 36, t('ending.resolution'), 44, C.wine, { head: true });
+    heading.setScale(Math.min(1, (aw - 112) / heading.width));
+
+    const gap = heading.displayWidth / 2 + 24;
+    const line = this.add.graphics();
     line.lineStyle(3, C.brassDark, 0.7);
-    line.lineBetween(0, 36, aw / 2 - 190, 36);
-    line.lineBetween(aw / 2 + 190, 36, aw, 36);
-    head.add(line);
-    head.add(txt(this, aw / 2, 36, t('ending.resolution'), 44, C.wine, { head: true }));
+    line.lineBetween(0, 36, aw / 2 - gap, 36);
+    line.lineBetween(aw / 2 + gap, 36, aw, 36);
+    head.add([line, heading]);
     area.add(head, 72, 24);
     area.addParagraphs(c.ending, 46);
     area.addSpace(20);

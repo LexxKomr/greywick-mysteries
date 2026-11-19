@@ -10,7 +10,7 @@
   ],
   "places": [
     { "label": "map.place.lighthouse", "x": 300, "y": 700 },
-    { "label": "map.place.harbour", "x": 430, "y": 870 },
+    { "label": "map.place.harbour", "x": 430, "y": 910 },
     { "label": "map.place.hotel", "x": 640, "y": 835 },
     { "label": "map.place.church", "x": 900, "y": 1135 },
     { "label": "map.place.station", "x": 250, "y": 1345 },
