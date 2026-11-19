@@ -37,13 +37,13 @@ export class MapScene extends Phaser.Scene {
     map.setDisplaySize(W, world.mapHeight);
 
     // заголовок прямо на бумаге карты
-    txt(this, W / 2, 66, world.town, 80, C.wine, { head: true });
-    txt(this, W / 2, 136, world.date, 36, C.inkSoft, { italic: true });
+    txt(this, W / 2, 66, t('map.town'), 80, C.wine, { head: true });
+    txt(this, W / 2, 136, t('map.date'), 36, C.inkSoft, { italic: true });
     roundButton(this, 82, 82, 50, 'home', () => this.scene.start('Menu'));
 
     // подписи мест
     for (const p of world.places) {
-      const label = txt(this, p.x, p.y, p.name, 30, C.paperLight, { head: true });
+      const label = txt(this, p.x, p.y, t(p.label), 30, C.paperLight, { head: true });
       const w = label.width + 40;
       const g = this.add.graphics();
       g.fillStyle(0x000000, 0.3);

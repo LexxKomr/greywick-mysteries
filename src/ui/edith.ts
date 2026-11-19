@@ -4,6 +4,7 @@
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
 import rulesRu from '../data/i18n/rules.ru.json';
+import rulesEn from '../data/i18n/rules.en.json';
 import { CaseData, GameKind } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
@@ -18,7 +19,7 @@ interface RulesText {
   hints: string[];
 }
 
-const RULES: Record<string, Record<string, RulesText>> = { ru: rulesRu };
+const RULES: Record<string, Record<string, RulesText>> = { ru: rulesRu, en: rulesEn };
 
 export function rulesFor(kind: GameKind): RulesText {
   return RULES[save.data.lang]?.[kind] ?? RULES.ru[kind];
@@ -42,7 +43,7 @@ export function showRules(scene: Phaser.Scene, kind: GameKind): void {
   line.lineStyle(3, C.brassDark, 0.7);
   line.lineBetween(px + 70, py + 150, px + pw - 70, py + 150);
   const area = new ScrollArea(scene, px + 60, py + 180, pw - 120, ph - 250).setDepth(902);
-  area.addParagraphs(r.rules, 44);
+  area.addParagraphs([...r.rules, t('rules.undoLimit')], 44);
   area.addSpace(20);
   const close = () => {
     dialogClosed();

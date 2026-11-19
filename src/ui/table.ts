@@ -4,6 +4,7 @@
 import Phaser from 'phaser';
 import { C, H, W } from '../config';
 import { toMenuAfterGame } from '../flow';
+import { ads } from '../services/ads';
 import { dailySeed } from '../logic/generator';
 import { CaseData, GameKind, getCase } from '../services/cases';
 import { attachThoughts, rulesFor, showIntro, showRules } from './edith';
@@ -232,6 +233,33 @@ export function helperButton(scene: Phaser.Scene, x: number, y: number, label: s
   };
 }
 
+interface UndoState {
+  readonly hasUndo: boolean;
+  readonly undosLeft: number;
+}
+
+export function updateUndoButton(button: Helper, game: UndoState): void {
+  button.setEnabled(game.hasUndo);
+  button.setBadge(game.undosLeft ? String(game.undosLeft) : t('game.ad'));
+}
+
+export async function requestUndo<T>(scene: Phaser.Scene, game: UndoState & {
+  undo(rewarded?: boolean): T;
+}, setBusy: (busy: boolean) => void): Promise<T | undefined> {
+  if (!game.hasUndo) return;
+  if (game.undosLeft > 0) return game.undo();
+
+  let active = true;
+  const stop = () => { active = false; };
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, stop);
+  setBusy(true);
+  const watched = await ads.showRewarded().catch(() => false);
+  scene.events.off(Phaser.Scenes.Events.SHUTDOWN, stop);
+  if (!active) return;
+  setBusy(false);
+  if (watched && scene.sys.isActive()) return game.undo(true);
+}
+
 /** Партия выиграна: звёзды, сохранение и переход (улика, доска или меню). */
 export function winLevel(scene: Phaser.Scene, ctx: LevelCtx, stars: number): void {
   sfx.win();
@@ -302,8 +330,9 @@ export function watchDead(scene: Phaser.Scene, w: DeadWatch): (delay?: number) =
 export interface LostOptions {
   /** помощь за рекламу (+5 карт, +1 проход), если она есть в этом пасьянсе */
   extra?: DialogButton;
-  /** «Отменить ходы»: вернуться туда, откуда ещё можно выиграть */
+  /** Возвращает один ход. */
   undo?: () => void;
+  undoRewarded?: boolean;
 }
 
 /** Окно «Ходов больше нет»: помощь за рекламу (где есть), отмена ходов, начать заново. */
@@ -311,7 +340,7 @@ export function lostDialog(scene: Phaser.Scene, ctx: LevelCtx, text: string, opt
   sfx.lose();
   const buttons: DialogButton[] = [];
   if (opts.extra) buttons.push(opts.extra);
-  if (opts.undo) buttons.push({ label: t('game.undoMoves'), style: buttons.length ? 'paper' : 'primary', onClick: opts.undo });
+  if (opts.undo) buttons.push({ label: t(opts.undoRewarded ? 'game.undoAd' : 'game.undoMove'), style: buttons.length ? 'paper' : 'primary', onClick: opts.undo });
   buttons.push({ label: t('game.restart'), style: buttons.length ? 'paper' : 'primary', onClick: () => restartLevel(scene, ctx) });
   showDialog(scene, t('game.lostTitle'), text, buttons);
 }

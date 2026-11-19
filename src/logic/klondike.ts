@@ -47,7 +47,7 @@ export class KlondikeGame {
   moves = 0;
   private history: Snapshot[] = [];
 
-  constructor(seed: number) {
+  constructor(seed: number, public undosLeft = Infinity) {
     const deck = shuffledDeck(seed);
     let k = 0;
     for (let col = 0; col < 7; col++) {
@@ -83,12 +83,13 @@ export class KlondikeGame {
     if (this.history.length > 400) this.history.shift();
   }
 
-  get canUndo(): boolean {
-    return this.history.length > 0 && !this.won;
-  }
+  get hasUndo(): boolean { return this.history.length > 0 && !this.won; }
 
-  undo(): boolean {
-    if (!this.canUndo) return false;
+  get canUndo(): boolean { return this.hasUndo && this.undosLeft > 0; }
+
+  undo(rewarded = false): boolean {
+    if (!this.hasUndo || (!rewarded && !this.canUndo)) return false;
+    if (!rewarded) this.undosLeft--;
     const h = this.history.pop()!;
     this.tableau = h.tableau;
     this.stock = h.stock;

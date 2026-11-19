@@ -129,13 +129,13 @@ export class Game {
     return true;
   }
 
-  get canUndo(): boolean {
-    return this.undosLeft > 0 && this.history.length > 0 && this.remaining > 0;
-  }
+  get hasUndo(): boolean { return this.history.length > 0 && this.remaining > 0; }
+
+  get canUndo(): boolean { return this.hasUndo && this.undosLeft > 0; }
 
   /** Отменяет последний ход. Возвращает отменённую запись или null. */
-  undo(): { type: 'play' | 'draw'; index: number; card: Card } | null {
-    if (!this.canUndo) return null;
+  undo(rewarded = false): { type: 'play' | 'draw'; index: number; card: Card } | null {
+    if (!this.hasUndo || (!rewarded && !this.canUndo)) return null;
     const h = this.history.pop()!;
     this.waste.pop();
     if (h.type === 'play') this.tableau[h.index] = h.card;
@@ -143,7 +143,7 @@ export class Game {
     this.streak = h.streak;
     this.score = h.score;
     this.bonusInStock = h.bonusInStock;
-    this.undosLeft--;
+    if (!rewarded) this.undosLeft--;
     return h;
   }
 

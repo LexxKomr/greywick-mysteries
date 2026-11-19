@@ -11,3 +11,10 @@ export function t(key: string, vars?: Record<string, string | number>): string {
   if (vars) for (const k in vars) s = s.split('{' + k + '}').join(String(vars[k]));
   return s;
 }
+
+export function syncDocumentLanguage(): void {
+  document.documentElement.lang = save.data.lang;
+  document.title = t('title.main') + '. ' + t('title.sub');
+  const loading = document.getElementById('loading');
+  if (loading) loading.textContent = t('loading');
+}

@@ -130,18 +130,18 @@ export class PyramidGame {
     return 'pass';
   }
 
-  get canUndo(): boolean {
-    return this.undosLeft > 0 && this.history.length > 0 && this.remaining > 0;
-  }
+  get hasUndo(): boolean { return this.history.length > 0 && this.remaining > 0; }
 
-  undo(): boolean {
-    if (!this.canUndo) return false;
+  get canUndo(): boolean { return this.hasUndo && this.undosLeft > 0; }
+
+  undo(rewarded = false): boolean {
+    if (!this.hasUndo || (!rewarded && !this.canUndo)) return false;
     const h = this.history.pop()!;
     this.pyramid = h.pyramid;
     this.stock = h.stock;
     this.waste = h.waste;
     this.pass = h.pass;
-    this.undosLeft--;
+    if (!rewarded) this.undosLeft--;
     return true;
   }
 

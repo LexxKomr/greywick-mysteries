@@ -1,0 +1,344 @@
+{
+  "id": "case02",
+  "number": 2,
+  "title": "The Guest Who Wasn’t There",
+  "place": "Grand Albion",
+  "intro": [
+    "Edith had barely switched on the library lamp on Monday morning when the bell over the door rang. A girl in a black dress and white apron hid a wet umbrella behind her back, as if she was afraid of dripping on the floor.",
+    "“I'm Mary Finch, from the Grand Albion. May I tell you something and let you decide whether it's worth going to the sergeant? One of our guests is missing. They told me to cross out his breakfast order.”",
+    "She set a key on the desk. The brass tag said 17. Edith reached for her notebook, but Mary still had a finger on the ring.",
+    "“His envelope is gone from the safe. The page he signed is gone from the register. Mr Ward asked for tea and eggs at eight. When I asked whether to cancel the order, they told me room seventeen had been empty all week.”"
+  ],
+  "comic": [
+    {
+      "image": "comic_albion_library",
+      "line": "Edith had just switched on the library lamp on Monday morning when the bell over the door rang."
+    },
+    {
+      "image": "comic_albion_maid",
+      "line": "“I'm Mary Finch, from the Grand Albion. One of our guests is missing. They told me to cross out his breakfast order.”"
+    },
+    {
+      "image": "comic_albion_key",
+      "line": "Mary set down the key to room seventeen. “His envelope is gone from the safe. The page he signed is gone from the register.”"
+    },
+    {
+      "image": "comic_albion_room",
+      "line": "“And now they say room seventeen has been empty all week.”"
+    }
+  ],
+  "clues": [
+    {
+      "title": "Key to Room 17",
+      "image": "albion_clue01",
+      "text": [
+        "In the staff room Mary opened the window so the rain would drown out their voices in the corridor. She slipped a key with a worn tag into Edith's hand.",
+        "“I took two towels up. Mr Ward opened the door himself, caught the top one as it fell and asked when we served tea. This morning the key was lying on the desk, and they told me I'd got the wrong floor.”",
+        "“Keep the key for now, Mary. Think who else saw Ward when he had no reason to hurry.”"
+      ],
+      "fact": "Mary opened the room for Mr Ward herself."
+    },
+    {
+      "title": "Breakfast Order",
+      "image": "albion_clue02",
+      "text": [
+        "The kitchen staff were drinking tea from big cups without saucers. The cook rummaged through her orders and pulled one out by its clean corner. Beside room 17 she'd written Ward, tea and soft-boiled eggs, all at eight.",
+        "“Asked for it himself,” she said. “Wanted a seat where he'd see Mr Blake in the morning. Then Hale came in and told me to leave the eggs in the basket. Just as well I'd not put the water on.”"
+      ],
+      "fact": "Ward ordered breakfast for eight on Monday."
+    },
+    {
+      "title": "Missing Register Page",
+      "image": "albion_clue03",
+      "text": [
+        "Edith set the register under the lamp. Saturday ended on page thirty-two and Monday began on thirty-five. A fresh, jagged strip of paper stuck out of the binding.",
+        "“Mr Ward wrote his address and signed on that page,” Mary said. “Hale gave him the pen. It caught on the paper and left a blot by the date. That's how I remember.”",
+        "Edith ran a finger along the stub. There was no blot in sight. She would have to find the other half of the tear."
+      ],
+      "fact": "The leaf with Sunday’s entries was torn out."
+    },
+    {
+      "title": "Safe Receipt",
+      "image": "albion_clue04",
+      "text": [
+        "Number forty-two sat between a watch and a pair of silver cufflinks in the safe book. ‘Blue envelope, sealed.’ Arthur Hale had signed underneath. The return column was blank.",
+        "“Hale says Ward took it himself,” Blake said, pushing the book towards Edith. “Tell me, Miss Vale, how am I meant to sort this out in the lobby when the man who signed the receipt is still behind the desk?”",
+        "“You could start by letting Mary talk. So far she's the only one who's told me what she saw.”"
+      ],
+      "fact": "Hale accepted Ward’s blue envelope as deposit 42."
+    },
+    {
+      "title": "Taxi Receipt",
+      "image": "albion_clue05",
+      "text": [
+        "Jack Bell took off his uniform cap and produced a crumpled receipt from the lining. A taxi to the station at twenty past five. The driver had written Ward in the passenger box.",
+        "“I only carried the suitcase,” Jack said. “Ask the driver. He was right by the door. Mr Ward told me to keep the noise down and paid him himself. In his shoes I'd have paid a bit extra to have the man come sooner.”"
+      ],
+      "fact": "Jack Bell booked a taxi to the station for 5:20."
+    },
+    {
+      "title": "Key Register",
+      "image": "albion_clue06",
+      "text": [
+        "“Mr Blake had the key all night,” Hale said. He squared the stationery on the desk before looking Edith in the eye. “If anybody wants it, I send them to him.”",
+        "Edith opened the key register. Beside ‘safe key’ stood the time, 5:25, and the same neat signature she'd seen on the entry for the envelope.",
+        "“Is that your signature, Mr Hale?”",
+        "He drew the book towards him, held a finger to the line and said he must have got his nights mixed up."
+      ],
+      "fact": "Hale signed for the safe key at 5:25."
+    },
+    {
+      "title": "Telegram Form",
+      "image": "albion_clue07",
+      "text": [
+        "The station clerk took Sunday's telegram form out of a file. ‘Your daughter is in hospital. Come by the first train.’ The sender's box read ‘A. Hale, Grand Albion.’",
+        "“Do you remember him?”",
+        "“Of course. He wanted to know if we could get it there before ten. I said I'd send the boy round and asked him to sign. The thing is, Miss Vale, I felt sorry for him at the time.”"
+      ],
+      "fact": "Hale sent the false message about Ward’s daughter."
+    },
+    {
+      "title": "First Train Ticket",
+      "image": "albion_clue08",
+      "text": [
+        "The attendant found the ticket stub in a drawer and opened the timetable to Monday. Ward had caught the 5:37. The man remembered him because the clasp on his suitcase had sprung. He'd had to help him lift it from underneath.",
+        "“Kept asking if he could make a call from the carriage. I said there was a telephone where he changed trains if he had time. Left without his change and all. Shall we try to find him?”"
+      ],
+      "fact": "The attendant saw Ward board the 5:37 train."
+    },
+    {
+      "title": "Ward’s Phone Call",
+      "image": "albion_clue09",
+      "text": [
+        "The telephone rang just as Edith put on her coat. Ward was calling from his daughter's house. Behind him someone was putting cups away.",
+        "“She opened the door herself, Miss Vale. Asked what I was doing there at that hour. I'd asked Jack to call me a taxi. Since you're in Greywick, would you tell Blake to get my envelope out of the safe? It's the repair invoices. Ask him to go over the figures with Mrs Reed. She'll know where to look.”"
+      ],
+      "fact": "Ward is alive. He left the envelope at the hotel."
+    },
+    {
+      "title": "Copies of the Invoices",
+      "image": "albion_clue10",
+      "text": [
+        "Agnes Reed arrived in the archive with a sewing basket. From beneath the reels she took three folded invoices tied with faded ribbon.",
+        "“It says they replaced the pipes in the whole east wing. I made the beds there while Hale looked after the work. I saw a carpenter plane down one door. Never laid eyes on a plumber.”",
+        "She smoothed the last sheet and pointed to the sum. Edith asked to see the same entry in the hotel ledger. It had been paid in full."
+      ],
+      "fact": "Agnes kept copies of bills for work that was never done."
+    },
+    {
+      "title": "Signed Payment Receipt",
+      "image": "albion_clue11",
+      "text": [
+        "Edith laid the copy of the contractor's receipt beside the invoice, opened the hotel ledger at the same sum and held the receipt to the light to make out the small handwriting. The money had been paid to Arthur Hale, who was in charge of the repairs. His signature was underneath.",
+        "“That's why Blake asked Ward to come,” Agnes said. “I brought him my copies last week. He wanted an independent accountant to check them against the originals. Hale knew. He confirmed the booking himself.”"
+      ],
+      "fact": "Hale received the money for work that was never done."
+    },
+    {
+      "title": "Hale’s Briefcase",
+      "image": "albion_clue12",
+      "text": [
+        "Sergeant Pennock put a brown briefcase on the desk. He'd found it in the night clerk's locker. Hale used it for his sandwiches and wage slips. Today a blue envelope lay on top, marked forty-two.",
+        "Edith drew out a loose sheet. Its edge matched the stub in the register. There was a blot next to Sunday's date and Ward's signature below it.",
+        "“It's time Mary put that key back on the desk,” Edith said. “Let her tell you herself who stayed in seventeen.”"
+      ],
+      "fact": "Hale’s briefcase held envelope 42 and the missing leaf."
+    }
+  ],
+  "accuse": [
+    "Ward is alive. Someone arranged his departure to get at the envelope of invoices. Who lured him away from the hotel, and which clues explain why?",
+    "Choose a suspect and mark the two clues your accusation rests on."
+  ],
+  "suspects": [
+    {
+      "id": "blake",
+      "name": "Gordon Blake",
+      "short": "Gordon Blake",
+      "role": "Hotel owner",
+      "portrait": "portrait_blake"
+    },
+    {
+      "id": "bell",
+      "name": "Jack Bell",
+      "short": "Jack Bell",
+      "role": "Porter",
+      "portrait": "portrait_bell"
+    },
+    {
+      "id": "reed",
+      "name": "Agnes Reed",
+      "short": "Agnes Reed",
+      "role": "Former housekeeper",
+      "portrait": "portrait_reed"
+    },
+    {
+      "id": "hale",
+      "name": "Arthur Hale",
+      "short": "Arthur Hale",
+      "role": "Night clerk",
+      "portrait": "portrait_hale"
+    }
+  ],
+  "culprit": "hale",
+  "links": [
+    {
+      "clues": [
+        7,
+        11
+      ],
+      "text": "Hale signed the false telegram and received the money for work that had never been done. Sending Ward away put a stop to the audit."
+    },
+    {
+      "clues": [
+        6,
+        12
+      ],
+      "text": "Hale signed for the safe key after Ward left the hotel. The missing envelope turned up in his briefcase."
+    },
+    {
+      "clues": [
+        7,
+        12
+      ],
+      "text": "The telegram Hale signed sent Ward away. The papers Hale removed after his departure were in the clerk's briefcase."
+    },
+    {
+      "clues": [
+        3,
+        12
+      ],
+      "text": "The leaf from Hale's briefcase fits the stub in the register. The blot and Ward's signature bear out Mary's story."
+    },
+    {
+      "clues": [
+        10,
+        11
+      ],
+      "text": "Agnes showed what the hotel had been billed for. The receipt identified the person who took the money."
+    }
+  ],
+  "wrong": {
+    "blake": [
+      "Blake told Mary to keep quiet, and Edith wasn't about to excuse him for it. But Agnes gave him her copies and he was the one who called Ward in to check them. He showed Edith the safe book when he could have left it behind a locked door. Who had a reason to stop the audit?"
+    ],
+    "bell": [
+      "Jack did carry the suitcase out before dawn. But Ward confirmed on the telephone that he'd asked Jack to call the taxi and had taken the suitcase with him. The blue envelope was still in the safe. It was worth going back through the hotel books to see who took the key."
+    ],
+    "reed": [
+      "Agnes came to see Ward with copies of the invoices. She could have kept them at home. Instead she'd brought them to Blake the previous week and asked him to look into the repairs. She knew about the bills because she'd worked there for years. Who stood to lose rather more than a job if the figures were checked?"
+    ]
+  },
+  "ending": [
+    "Hale recognised the form the moment Pennock took it out of the file. He reached for the inside pocket where he kept his pen and then put both hands on the desk.",
+    "“Mr Ward meant to check the bills in the morning,” Edith said. “You sent him to his daughter, then opened the safe, took the envelope and tore out the page. You left your signature in the key register. And here. The telegraph clerk asked for it, remember?”",
+    "Hale looked at the briefcase. “I thought he'd be back in a day,” he said at last. “I'd have had time to say the papers had gone missing on the way. Who would look for the envelope in a hotel where there hadn't been a Mr Ward?”",
+    "That afternoon Ward rang the hotel again and agreed with Blake to go through the invoices with Agnes on Tuesday. When Blake hung up, he took out the key to seventeen and set it in front of Mary.",
+    "“Breakfast at eight, Miss Finch,” he added. “Ask how he likes his eggs. Let's have Cook write it down herself today.”"
+  ],
+  "levels": [
+    {
+      "game": "golf",
+      "difficulty": 1
+    },
+    {
+      "game": "golf",
+      "difficulty": 2
+    },
+    {
+      "game": "golf",
+      "difficulty": 3
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 1
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 2
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 3
+    },
+    {
+      "game": "klondike",
+      "difficulty": 1
+    },
+    {
+      "game": "klondike",
+      "difficulty": 2
+    },
+    {
+      "game": "klondike",
+      "difficulty": 3
+    },
+    {
+      "game": "spider",
+      "difficulty": 1
+    },
+    {
+      "game": "spider",
+      "difficulty": 2
+    },
+    {
+      "game": "spider",
+      "difficulty": 3
+    }
+  ],
+  "tables": [
+    "table_kitchen",
+    "table_albion",
+    "table_station",
+    "table_library"
+  ],
+  "thoughts": [
+    {
+      "after": 0,
+      "lines": [
+        "Mary remembers the towels. I'd trust her memory before I'd trust the front desk.",
+        "Let's find out when Ward meant to leave."
+      ]
+    },
+    {
+      "after": 2,
+      "lines": [
+        "He ordered breakfast. Whatever made him hurry happened after he spoke to the cook.",
+        "I wonder who noticed the empty room first."
+      ]
+    },
+    {
+      "after": 4,
+      "lines": [
+        "Jack hurried out to the taxi with Ward. What did Hale have left to do?",
+        "The safe has a book of its own. How convenient to forget that."
+      ]
+    },
+    {
+      "after": 6,
+      "lines": [
+        "Five twenty-five. The morning shift hadn't come in yet.",
+        "I'll see where that telegram came from. Paper can outlast a person's haste."
+      ]
+    },
+    {
+      "after": 8,
+      "lines": [
+        "Ward was ready to leave without his change. What did they tell him about his daughter?",
+        "I do hope someone answers the telephone."
+      ]
+    },
+    {
+      "after": 9,
+      "lines": [
+        "Ward left the envelope himself. Now we can ask whom the invoices might inconvenience.",
+        "Agnes remembers every room. I must give her time to tell it."
+      ]
+    },
+    {
+      "after": 11,
+      "lines": [
+        "The register is missing a leaf. Let's see whether Pennock can find it."
+      ]
+    }
+  ]
+}

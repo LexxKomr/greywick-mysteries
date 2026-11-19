@@ -12,7 +12,7 @@ import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
 import { CardDrag } from '../ui/drag';
 import { HintFlash, hintCard, hintSlot } from '../ui/hints';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, requestUndo, updateUndoButton, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
 const CS = 1.2;
@@ -61,7 +61,7 @@ export class FreeCellScene extends Phaser.Scene {
     const seed = ctx.data.dailyDate === undefined
       ? freecellSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty)
       : dailyPreset(ctx.data.dailyDate, FREECELL_SEEDS[0]);
-    this.fc = new FreeCellGame(seed);
+    this.fc = new FreeCellGame(seed, 3);
     this.flash = new HintFlash(this);
     (window as unknown as { __fc: unknown }).__fc = { game: this.fc, scene: this };
 
@@ -96,7 +96,7 @@ export class FreeCellScene extends Phaser.Scene {
     this.layer = new CardLayer(this, CS, { x: W / 2, y: this.topY }, (img, id) => drag.add(img, id));
     this.layer.apply(this.places(), true, 12);
 
-    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, 'undo', () => this.tapUndo());
+    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, 'undo', () => void this.tapUndo());
     this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), 'hint', () => void this.tapHint());
     this.refreshHud();
     this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.busy);
@@ -130,7 +130,7 @@ export class FreeCellScene extends Phaser.Scene {
   }
 
   private refreshHud(): void {
-    this.undoBtn.setEnabled(this.fc.canUndo);
+    updateUndoButton(this.undoBtn, this.fc);
     this.hint.setBadge(this.hintsLeft > 0 ? String(this.hintsLeft) : t('game.ad'));
     this.ui.setStars(freecellStars(this.fc.moves));
   }
@@ -244,25 +244,21 @@ export class FreeCellScene extends Phaser.Scene {
   }
 
   private onStuck(): void {
-    lostDialog(this, this.ctx, t('game.deadTextNoHelp'), { undo: this.fc.canUndo ? () => this.undoToLive() : undefined });
+    lostDialog(this, this.ctx, t('game.deadTextNoHelp'), {
+      undo: this.fc.hasUndo ? () => void this.tapUndo() : undefined,
+      undoRewarded: this.fc.undosLeft === 0,
+    });
   }
 
-  /** «Отменить ходы»: откатываемся, пока снова можно выиграть. */
-  private undoToLive(): void {
-    for (let n = 0; n < 60 && this.fc.canUndo; n++) {
-      this.fc.undo();
-      if (!this.isDead()) break;
-    }
-    sfx.draw();
-    this.sync();
-    this.checkDead();
-  }
 
   // ---------- помощники ----------
 
-  private tapUndo(): void {
+  private async tapUndo(): Promise<void> {
     if (this.finished || this.busy) return;
-    if (!this.fc.undo()) {
+    const restored = await requestUndo(this, this.fc, (busy) => { this.busy = busy; });
+    if (!this.sys.isActive()) return;
+    this.checkDead();
+    if (!restored) {
       sfx.no();
       return;
     }

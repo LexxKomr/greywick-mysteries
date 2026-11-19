@@ -262,7 +262,7 @@ function paintJoker(ctx: CanvasRenderingContext2D, label: string): void {
   ctx.fillText(label, TW / 2, TH * 0.82);
 }
 
-/** Создаёт текстуры всех карт. Вызывается один раз после загрузки шрифтов. */
+/** Создаёт текстуры карт после загрузки шрифтов и при смене языка. */
 export function createCardTextures(scene: Phaser.Scene): void {
   const labels = t('ranks').split(',');
   const src = (key: string) => (scene.textures.exists(key) ? (scene.textures.get(key).getSourceImage() as CanvasImageSource) : null);

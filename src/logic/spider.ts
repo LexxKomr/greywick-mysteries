@@ -32,7 +32,9 @@ export class SpiderGame {
 
   get won(): boolean { return this.runs === 8; }
   get canDraw(): boolean { return this.stock.length >= 10 && this.columns.every((col) => col.length > 0); }
-  get canUndo(): boolean { return this.undosLeft > 0 && this.history.length > 0; }
+  get hasUndo(): boolean { return this.history.length > 0; }
+
+  get canUndo(): boolean { return this.hasUndo && this.undosLeft > 0; }
 
   canLift(from: number, at: number): boolean {
     const column = this.columns[from];
@@ -76,14 +78,14 @@ export class SpiderGame {
     return true;
   }
 
-  undo(): boolean {
-    if (!this.canUndo) return false;
+  undo(rewarded = false): boolean {
+    if (!this.hasUndo || (!rewarded && !this.canUndo)) return false;
     const last = this.history.pop()!;
     this.columns = last.columns;
     this.stock = last.stock;
     this.runs = last.runs;
     this.turns--;
-    this.undosLeft--;
+    if (!rewarded) this.undosLeft--;
     return true;
   }
 

@@ -85,7 +85,7 @@
   "settings.off": "Выключен",
   "settings.lang": "Язык",
   "settings.langRu": "Русский",
-  "settings.langEn": "English (скоро)",
+  "settings.langEn": "English",
   "settings.reset": "Сбросить прогресс",
   "settings.resetTitle": "Сбросить прогресс?",
   "settings.resetText": "Все найденные улики и звёзды будут удалены. Вернуть их будет нельзя.",
@@ -121,5 +121,16 @@
   "rules.start": "Понятно, начнём",
   "rules.firstPlay": "Нажмите на выделенную карту. Она на один ранг старше или младше карты в сбросе.",
   "rules.firstDraw": "Подходящих карт нет. Нажмите на колоду, чтобы открыть новую карту.",
-  "rules.button": "Правила"
+  "rules.button": "Правила",
+  "loading": "Загрузка…",
+  "map.town": "Грейвик",
+  "map.date": "Октябрь 1962 года",
+  "map.place.lighthouse": "Маяк",
+  "map.place.harbour": "Гавань",
+  "map.place.hotel": "«Гранд-Альбион»",
+  "map.place.church": "Церковь",
+  "map.place.station": "Вокзал",
+  "map.place.library": "Библиотека",
+  "game.undoAd": "Отменить (реклама)",
+  "rules.undoLimit": "Первые три отмены в каждой партии бесплатны. После этого одна реклама даёт одну отмену."
 }

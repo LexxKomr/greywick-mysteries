@@ -1,3 +1,446 @@
 {
-  "todo": "TODO: English text of case 1 (The Keeper's Last Light). Until it is written the game shows the Russian file."
+  "id": "case01",
+  "number": 1,
+  "title": "The Keeper’s Last Light",
+  "place": "Lighthouse",
+  "intro": [
+    "The holiday season in Greywick ended in September. The hotels put up their shutters, and every evening the fog rolled in from the sea, settled on the promenade and stayed until noon.",
+    "On Thursday Silas Calder, the lighthouse keeper, brought back a library book as usual. He grumbled about the damp getting into his knees and took another. On Saturday morning Tommy Burke, a fisherman, found him on the rocks below the path from the lighthouse to the old boathouse.",
+    "“He slipped in the fog, Miss Vale. That's all there is to it,” said Sergeant Pennock, taking off his cap as if he were standing by a grave. “He'd been drinking, too. You can smell it on his coat from here. Slippery path, dark night, and he wasn't a young man. It happens.”",
+    "Edith Vale had lent books to the people of Greywick for thirty years and knew more about some of them than their own wives did. She knew this about Silas. Ever since the winter of forty-nine, when a drunk driver struck his wife on the wet road, he hadn't touched a drop. At Christmas, at his brother's funeral, never once.",
+    "She looked down at the grey water beneath the cliff and drew her coat tighter.",
+    "Let the sergeant think what he liked. She would look into it herself."
+  ],
+  "clues": [
+    {
+      "title": "Bottle of Cognac",
+      "image": "clue01",
+      "text": [
+        "At the station the sergeant laid out everything they'd found on Silas. A ring of keys, a stub of pencil, a handkerchief and a bottle of cognac with a gold label. His coat lay beside them, smelling as though it had been washed in spirits.",
+        "“There's your answer,” said Pennock. “Man drinks alone at the lighthouse and then goes for a walk along the cliff. What more do you want?”",
+        "Edith bent over the bottle. The cork had been pulled, but there was scarcely a mouthful missing.",
+        "“Sergeant, the coat is soaked through and the bottle is nearly full. If he drank enough to fall off a cliff, where did it all go?” She straightened. “Someone poured it over him.”"
+      ],
+      "fact": "His coat is soaked in cognac, yet the bottle is almost full."
+    },
+    {
+      "title": "Dr Marsh",
+      "image": "clue02",
+      "text": [
+        "Dr Philip Marsh caught her outside the station and took her elbow the way one takes hold of a distressed old lady.",
+        "“Don't torment yourself, Miss Vale. I examined the poor man, and it's plain enough. A fall onto the rocks and a great deal of drink. I've signed the report.” He sighed and shook his head. “I was at Hollow Farm all night delivering young Mrs Dunning's baby. I barely made it home before they sent for me.”",
+        "He took out a silver flask and poured a little into the cap.",
+        "“For your nerves. Do have some. It's proper French cognac.”",
+        "Edith took a sip to be polite. It was smooth, with a smell of prunes, and probably cost more than her weekly pension. You couldn't buy it in Greywick. Cheap brandy was the best Mr Hubble's shop could do."
+      ],
+      "fact": "Marsh says he was at the farm until morning."
+    },
+    {
+      "title": "Row Outside the Hotel",
+      "image": "clue03",
+      "text": [
+        "Nellie from the Sea View tearoom poured Edith's tea and spoke in a whisper, though the place was empty.",
+        "“Last week, Miss Vale, right outside our windows! Mr Blake from the Grand Albion caught Mr Calder by the sleeve and shouted, ‘You'll be sorry, you old fool. I swear you'll be sorry!’ I nearly dropped a whole tray of cakes.”",
+        "“What did Mr Calder say?”",
+        "“Nothing. He shook the man off, straightened his hat and walked away as calmly as if they'd been talking about the weather.” Nellie shivered and glanced at the window. “I thought then it would end badly. Well, look what happened.”"
+      ],
+      "fact": "Nellie heard Blake threaten Calder."
+    },
+    {
+      "title": "Lilac Scarf",
+      "image": "clue04",
+      "text": [
+        "The scarf was caught on a gorse bush twenty paces from where the path dropped to the rocks. The wind beat it against the thorns like a trapped bird.",
+        "Edith freed it carefully. Fine silk, expensive, and a familiar scent of lily of the valley. Only one woman in Greywick wore that perfume, Margaret Everly, the captain's widow. Every Tuesday she borrowed romance novels from the library and insisted they were for her maid.",
+        "What had Margaret been doing on the lighthouse path at night?"
+      ],
+      "fact": "Margaret’s scarf was found by the cliff edge."
+    },
+    {
+      "title": "Note in the Pilot Book",
+      "image": "clue05",
+      "text": [
+        "Edith still hadn't put away the battered copy of the South Coast Pilot that Silas had returned on Thursday. There was a ring from a teacup on the cover. He used whatever came to hand as a bookmark and wrote whatever came into his head on it.",
+        "A library slip stuck out between the pages. On the back, in his crooked pencil hand, it said:",
+        "“Third night of headlights at the old boathouse, about 2:10. They go down to the water and put the lights out. Boat with no lantern. I'll have a look myself on Saturday.”",
+        "Edith sat over the slip for a long time with her spectacles still on. Silas had died in the early hours of Saturday, on the path to the boathouse."
+      ],
+      "fact": "Silas saw headlights at the old boathouse."
+    },
+    {
+      "title": "Cut Pages",
+      "image": "clue06",
+      "text": [
+        "No one had locked the lighthouse, and Edith doubted the sergeant had been upstairs. She went up all one hundred and twelve steps, pausing at each landing with a hand on the cold rail.",
+        "The log lay where it belonged, on the desk. For twenty years Silas had recorded every ship, every storm and every lamp he'd had to replace. The last three nights were gone. A very sharp blade had cut the pages cleanly along the binding.",
+        "Someone knew the keeper wrote down everything he saw. Someone had come up here while Silas lay on the rocks below."
+      ],
+      "fact": "Three nights were cut out of the logbook."
+    },
+    {
+      "title": "The Fisherman’s Watch",
+      "image": "clue07",
+      "text": [
+        "Tommy Burke was mending a net on an upturned boat. He started so violently at the sight of Edith that he dropped his netting needle in a puddle.",
+        "“I didn't kill him, Miss Vale!” he blurted before she could greet him. “I swear to God I never laid a finger on him!”",
+        "He reached inside his coat and held out Silas's silver watch. Its glass was cracked.",
+        "“I found him at six. He was cold already, and the watch was lying next to him on a rock. My mother needs medicine from Plymouth, and I thought he wouldn't be needing it any more.” He sniffed and looked down at his boots. “Rotten thing to do, I know. Only I never touched him.”",
+        "Edith took the watch. Its hands showed twenty to two. It had struck the rocks with its owner."
+      ],
+      "fact": "Silas’s watch stopped at 1:40."
+    },
+    {
+      "title": "The Widow’s Secret",
+      "image": "clue08",
+      "text": [
+        "Margaret Everly turned pale at the sight of the scarf in Edith's hands. Then she began to cry, quietly and messily, as people do when they've held themselves together too long.",
+        "“We were going to marry at Christmas,” she said when she could speak. “Silas and I. We told nobody. The whole town would have talked about the captain's widow and the lighthouse keeper, at our age. We'd meet by the lighthouse at two in the morning, when even the dogs in Greywick are asleep.”",
+        "“Were you there that night?”",
+        "“I got there at five to two. The door was open and the lamp was on but he wasn't there. I called and called.” She squeezed her bundle of letters until the ribbon crumpled. “On my way up, a car went past on the coast road, towards town. It was going fast, about ten to two. Its left tail light was out. I could see the right one until it rounded the bend. I waited for Silas until three, then I got frightened and ran home. That must be when I lost the scarf.”"
+      ],
+      "fact": "A car with its left tail light out passed at 1:50."
+    },
+    {
+      "title": "A Game of Whist",
+      "image": "clue09",
+      "text": [
+        "Gordon Blake received Edith in the empty bar of the Grand Albion, looking as grim as the October sky.",
+        "“Yes, I shouted at him,” he said before she could ask. “The stubborn old man wrote to the county council about my new veranda being on public land. Now I've got to pull it down. Two hundred pounds down the drain. I could have strangled him then and there, I'll grant you. I didn't.”",
+        "“Where were you on Friday night, Mr Blake?”",
+        "“Right here at this table. I played whist with two travelling salesmen from Exeter until three and lost eleven shillings to them. Ask the barman. Ask the men themselves. They're still staying here. You'll find them in the register.”",
+        "The barman nodded without looking up from the glasses he was polishing. The salesmen told her the same story, down to the last shilling."
+      ],
+      "fact": "Blake played whist until three in the morning."
+    },
+    {
+      "title": "An Injury to the Head",
+      "image": "clue10",
+      "text": [
+        "Mrs Pike, the undertaker's wife, loved strong tea and telling people things she'd have been better off keeping to herself.",
+        "“I'll say this much, Miss Vale.” She lowered her voice, though there was nobody in the kitchen but the two of them and the cat. “My Albert's laid out the dead for forty years. Mr Calder fell face down, didn't he? Cut forehead, scraped hands, just as you'd expect. But there's a round, even dent at the back of his head, like somebody hit him with something heavy. Albert says rocks don't leave a mark like that.”",
+        "“Did Dr Marsh see it?”",
+        "“Course he did. He just left it out of the report.” Mrs Pike poured herself more tea and sighed. “He said there was no point upsetting people. It wouldn't bring the man back.”"
+      ],
+      "fact": "Marsh omitted the injury at the back of Calder’s head."
+    },
+    {
+      "title": "Crates in the Boathouse",
+      "image": "clue11",
+      "text": [
+        "Tommy agreed to take her to the boathouse, looking over his shoulder the whole way. There was a bright new padlock on the door, but the boards at the side had rotted years ago. Tommy pulled one aside easily.",
+        "It smelled of salt and rotting seaweed inside. Three crates stood in a corner, each packed with gold-labelled cognac bottles nestled in straw. The same bottles. None bore a duty stamp.",
+        "“Smuggling,” whispered Tommy. “They bring it across from France by boat, I've heard. Never thought they brought it here.”",
+        "Old and new tyre tracks crossed in the mud outside. The same diagonal cut showed up in the right-hand tracks. Edith sketched it on the back of an envelope.",
+        "On the way home she passed Marsh's surgery. The right rear tyre of his car had a diagonal cut just like the one in her sketch. The left tail light was broken."
+      ],
+      "fact": "A tyre print at the boathouse matches Marsh’s car."
+    },
+    {
+      "title": "A Night at Hollow Farm",
+      "image": "clue12",
+      "text": [
+        "At the market Mrs Dunning from Hollow Farm was selling eggs and showing everyone a photograph of her grandson, as wrinkled and cross as any newborn.",
+        "“Born Friday, Miss Vale, at eleven that night, right as the clock struck! Dr Marsh was there, bless him. He washed his hands, had tea and a bit of pie, and was off before quarter past twelve.”",
+        "“Before quarter past twelve?” Edith asked. “Are you sure?”",
+        "“Of course I'm sure. We all dropped straight into bed, dead on our feet.” Mrs Dunning laughed and held the picture nearer. “Why do you ask?”",
+        "Edith bought a dozen eggs she had no use for and made her way slowly home. Dr Marsh had said he'd stayed at the farm until morning."
+      ],
+      "fact": "Marsh left Hollow Farm before 12:15 a.m."
+    }
+  ],
+  "accuse": [
+    "Edith stood in front of the board, looking over everything she'd learned that week. The tea in her cup had long since gone cold.",
+    "Who killed Silas Calder?"
+  ],
+  "suspects": [
+    {
+      "id": "marsh",
+      "name": "Dr Philip Marsh",
+      "short": "Dr Marsh",
+      "role": "Town doctor",
+      "portrait": "portrait_marsh"
+    },
+    {
+      "id": "blake",
+      "name": "Gordon Blake",
+      "short": "Gordon Blake",
+      "role": "Hotel owner",
+      "portrait": "portrait_blake"
+    },
+    {
+      "id": "everly",
+      "name": "Margaret Everly",
+      "short": "Margaret Everly",
+      "role": "The captain’s widow",
+      "portrait": "portrait_everly"
+    },
+    {
+      "id": "burke",
+      "name": "Tommy Burke",
+      "short": "Tommy Burke",
+      "role": "Fisherman",
+      "portrait": "portrait_burke"
+    }
+  ],
+  "culprit": "marsh",
+  "wrong": {
+    "blake": [
+      "Edith shook her head. Blake had threatened Silas in front of half the town. But that night he was losing shillings to two travelling salesmen until three, and everyone in the bar knew it. She was looking for the person who drove to the boathouse."
+    ],
+    "everly": [
+      "Edith put down the lilac scarf. Margaret reached the lighthouse at five to two. Silas's watch stopped at twenty to. She was the one who saw the car heading into town, and you don't weep like that for someone you've pushed off a cliff. Someone else had been there."
+    ],
+    "burke": [
+      "Edith remembered the shaking hands that gave her the watch. Taking it from a dead man was wrong, but Tommy found him at six in the morning, hours after Silas died. And Tommy had never owned a car like the one that left the lighthouse at ten to two. Someone else was responsible."
+    ]
+  },
+  "ending": [
+    "Edith didn't go to the sergeant. Pennock would believe the doctor before an old librarian with a basket of eggs. She went to see Marsh herself after Sunday service and asked Tommy to bring Pennock to the surgery door at three sharp, even if he had to drag him by the sleeve.",
+    "The doctor greeted her with the same smile as ever and offered her tea.",
+    "“No, thank you, Doctor.” Edith sat down without taking off her coat. “I won't be long. You left Hollow Farm before quarter past twelve, and you told the sergeant you stayed till morning. Silas had seen headlights by the boathouse three nights in a row, so he went down to see for himself. He found you with the crates. You hit him from behind, pushed him off the path and soaked his coat in the same French cognac you carry in your flask. Then you went up to the lantern and cut three nights out of the log. Cleanly, right at the binding. A blade as thin as your scalpel would do it.”",
+    "The doctor was still smiling. The smile had ceased to mean anything.",
+    "“You can't prove it, Miss Vale. Who's going to believe you?”",
+    "“Albert Pike saw the injury you left out of your report. Mrs Dunning remembers when you left. Margaret saw the car with one tail light, and your tyre left that same diagonal mark in the mud at the boathouse.”",
+    "The doctor rose slowly and rested a hand on the heavy marble paperweight. Edith didn't move. The surgery clock struck three and someone knocked.",
+    "“Dr Marsh?” came Sergeant Pennock's voice. “Would you open the door, please? Something's been brought to my attention.”",
+    "It turned out Marsh owed money on the races in Exeter. The Frenchmen paid him to store their cognac and deliver it at night. Nobody stopped the doctor's car when he said he was on his way to a patient.",
+    "Two weeks later the lighthouse was lit again. The new keeper, a young man who didn't say much, entered his first night in the log. Edith put the South Coast Pilot back on its proper shelf. She kept Silas's bookmark.",
+    "Then she brewed tea and for the first time that week fell asleep without thinking about the cliff.",
+    "On Monday morning a maid from the Grand Albion came into the library, twisting her apron. Could she speak to Miss Vale in private?"
+  ],
+  "levels": [
+    {
+      "game": "tripeaks",
+      "difficulty": 1
+    },
+    {
+      "game": "tripeaks",
+      "difficulty": 2
+    },
+    {
+      "game": "tripeaks",
+      "difficulty": 3
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 1
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 2
+    },
+    {
+      "game": "pyramid",
+      "difficulty": 3
+    },
+    {
+      "game": "klondike",
+      "difficulty": 1
+    },
+    {
+      "game": "klondike",
+      "difficulty": 2
+    },
+    {
+      "game": "klondike",
+      "difficulty": 3
+    },
+    {
+      "game": "freecell",
+      "difficulty": 1
+    },
+    {
+      "game": "freecell",
+      "difficulty": 2
+    },
+    {
+      "game": "freecell",
+      "difficulty": 3
+    }
+  ],
+  "opening": [
+    "Silas Calder, the keeper, was found in the fog below the lighthouse. Sergeant Pennock thinks he had been drinking and slipped on the wet path.",
+    "Edith Vale, a retired librarian, had known Silas for thirty years. He hadn't touched a drop in thirteen. She decides to find out what happened at the lighthouse."
+  ],
+  "links": [
+    {
+      "clues": [
+        1,
+        11
+      ],
+      "text": "The same French cognac was found in the boathouse. The nearly full bottle and the soaked coat support Edith's suspicion that someone made Silas look drunk."
+    },
+    {
+      "clues": [
+        2,
+        12
+      ],
+      "text": "Marsh said he'd stayed at the farm until morning. Mrs Dunning remembered him leaving before quarter past twelve."
+    },
+    {
+      "clues": [
+        3,
+        9
+      ],
+      "text": "Nellie heard the threat, but the barman and two guests confirmed that Blake played with them until three."
+    },
+    {
+      "clues": [
+        4,
+        8
+      ],
+      "text": "The scarf led Edith to Margaret. The widow explained what she was doing at the lighthouse and why she had kept her meetings with Silas secret."
+    },
+    {
+      "clues": [
+        7,
+        8
+      ],
+      "text": "Silas's watch stopped at 1:40. Ten minutes later Margaret saw a car drive away from the lighthouse towards town."
+    },
+    {
+      "clues": [
+        8,
+        11
+      ],
+      "text": "Margaret remembered that the left tail light was out. That light is broken on Marsh's car, and the cut in his tyre matches the print by the boathouse."
+    },
+    {
+      "clues": [
+        10,
+        11
+      ],
+      "text": "The tyre print puts Marsh's car at the boathouse. The injury he omitted calls his explanation of the fall into question."
+    },
+    {
+      "clues": [
+        10,
+        12
+      ],
+      "text": "Marsh left the injury out of his report and lied about leaving the farm. Both clues cast doubt on his account of that night."
+    }
+  ],
+  "thoughts": [
+    {
+      "after": 0,
+      "lines": [
+        "Thirteen years without a drop and then drunk enough to fall off a cliff? I don't believe it.",
+        "Silas knew that path better than I knew my library. He could have walked it in his sleep.",
+        "Sergeant Pennock is a good man. I only wish he'd think now and then."
+      ]
+    },
+    {
+      "after": 1,
+      "lines": [
+        "The coat is soaked and the bottle is nearly full. Who drinks like that?",
+        "Someone poured the cognac over his coat. What for?",
+        "French cognac with a gold label. Where would a lighthouse keeper get a thing like that?"
+      ]
+    },
+    {
+      "after": 2,
+      "lines": [
+        "The doctor signed the report in twenty minutes. He was certainly quick about it.",
+        "The same cognac Silas had in his pocket. There are plenty of French cognacs, I suppose.",
+        "All night at Hollow Farm, the doctor says. Poor man must be exhausted."
+      ]
+    },
+    {
+      "after": 3,
+      "lines": [
+        "‘You'll be sorry, you old fool.’ They weren't discussing the weather.",
+        "What could have put Gordon Blake in such a temper? Silas hardly ever quarrelled.",
+        "Nellie likes to embroider a story. I believe her about nearly dropping the tray."
+      ]
+    },
+    {
+      "after": 4,
+      "lines": [
+        "Lily of the valley. What was Margaret Everly doing out on that path at night?",
+        "The captain's widow, borrowing romances for her ‘maid’. Margaret had something to keep to herself.",
+        "The scarf was right by the cliff edge. Was she in a hurry? Was she running from someone?"
+      ]
+    },
+    {
+      "after": 5,
+      "lines": [
+        "‘I'll have a look myself.’ Oh, Silas. Why didn't you tell me?",
+        "Headlights at the boathouse and a boat without a lantern. Who comes down to the sea at two in the morning?",
+        "He died on the very path he wrote about. I don't believe in coincidences like that."
+      ]
+    },
+    {
+      "after": 6,
+      "lines": [
+        "Cut cleanly, right along the binding. Whoever did it knew how to handle a blade.",
+        "Someone knew about the log and knew Silas wrote everything down.",
+        "So they went up to the lighthouse afterwards. That took nerve."
+      ]
+    },
+    {
+      "after": 7,
+      "lines": [
+        "Twenty to two. That's when Silas's watch stopped.",
+        "Tommy took a dead man's watch. A rotten thing to do. But would he kill for it?",
+        "His mother's ill, and he needs to go to Plymouth for her medicine. Poverty makes people do foolish things."
+      ]
+    },
+    {
+      "after": 8,
+      "lines": [
+        "Silas was going to marry. Thirty years of lending him books, and I'd never have guessed.",
+        "Margaret arrived at five to two. Silas's watch stopped at twenty to. Fifteen minutes.",
+        "A car drove towards town at ten to two, with only the right tail light working."
+      ]
+    },
+    {
+      "after": 9,
+      "lines": [
+        "Whist until three, eleven shillings lost and witnesses in the register. Gordon made plenty of noise, but his evening was accounted for.",
+        "A veranda on public land. Silas couldn't abide a broken rule, even a small one."
+      ]
+    },
+    {
+      "after": 10,
+      "lines": [
+        "A dent at the back of his head. He fell face down. How would that happen?",
+        "The doctor saw the injury and left it out. ‘No point upsetting people.’ How kind of him.",
+        "Something heavy and round. Someone came up behind Silas."
+      ]
+    },
+    {
+      "after": 11,
+      "lines": [
+        "The same bottles with no duty stamps. So that's who Silas saw.",
+        "The same cut in the print at the boathouse and on Marsh's tyre. And that broken left light.",
+        "Smugglers need someone who can drive about at night without being stopped."
+      ]
+    },
+    {
+      "after": 12,
+      "lines": [
+        "He left Hollow Farm before quarter past twelve. He said he stayed until morning.",
+        "Why would the doctor lie about where he was that night? An honest man wouldn't have to.",
+        "Eleven o'clock, the baby's born, the doctor's had his tea. Where did he go next?"
+      ]
+    }
+  ],
+  "comic": [
+    {
+      "image": "comic_lighthouse",
+      "line": "Silas Calder, the lighthouse keeper, was found on the rocks below the cliff."
+    },
+    {
+      "image": "comic_pennock",
+      "line": "“He'd been drinking,” said Sergeant Pennock. “He slipped on the wet path.”"
+    },
+    {
+      "image": "comic_edith",
+      "line": "Edith Vale had known Silas for thirty years. He hadn't touched a drop in thirteen."
+    },
+    {
+      "image": "comic_finale",
+      "line": "Let the sergeant think what he liked. She would find out what happened herself."
+    }
+  ]
 }

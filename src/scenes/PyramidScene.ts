@@ -7,7 +7,7 @@ import { ads } from '../services/ads';
 import { t } from '../services/i18n';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, requestUndo, updateUndoButton, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 import { HintFlash, hintCard, hintSlot } from '../ui/hints';
@@ -114,7 +114,7 @@ export class PyramidScene extends Phaser.Scene {
       this.tweens.add({ targets: s, x, y, alpha: 1, duration: 280, delay: 40 + i * 24, ease: 'Cubic.easeOut' });
     }
 
-    this.undo = helperButton(this, W / 2 - 290, helpersY, t('game.undo'), '3', 'undo', () => this.tapUndo());
+    this.undo = helperButton(this, W / 2 - 290, helpersY, t('game.undo'), '3', 'undo', () => void this.tapUndo());
     this.hint = helperButton(this, W / 2, helpersY, t('game.hint'), String(FREE_HINTS), 'hint', () => void this.tapHint());
     helperButton(this, W / 2 + 290, helpersY, t('game.plusPass'), t('game.ad'), 'plus_cards', () => void this.tapPlusPass());
     this.refreshHud();
@@ -303,17 +303,19 @@ export class PyramidScene extends Phaser.Scene {
     this.stockEmpty.setAlpha(this.py.canDraw ? 1 : 0.35);
     this.recycleIcon.setVisible(n === 0 && this.py.canDraw);
     this.passText.setText(t('game.pass', { n: this.py.pass, total: this.py.maxPasses }).replace(' ', '\n'));
-    this.undo.setBadge(String(this.py.undosLeft));
-    this.undo.setEnabled(this.py.canUndo);
+    updateUndoButton(this.undo, this.py);
     this.hint.setBadge(this.hintsLeft > 0 ? String(this.hintsLeft) : t('game.ad'));
     this.ui.setStars(pyramidStars(this.py.pass));
   }
 
   // ---------- помощники ----------
 
-  private tapUndo(): void {
+  private async tapUndo(): Promise<void> {
     if (this.finished || this.adBusy) return;
-    if (!this.py.undo()) {
+    const restored = await requestUndo(this, this.py, (busy) => { this.adBusy = busy; });
+    if (!this.sys.isActive()) return;
+    this.checkDead();
+    if (!restored) {
       sfx.no();
       return;
     }
@@ -381,18 +383,8 @@ export class PyramidScene extends Phaser.Scene {
           } else this.onLost();
         },
       },
-      undo: this.py.canUndo ? () => this.undoToLive() : undefined,
+      undo: this.py.hasUndo ? () => void this.tapUndo() : undefined,
+      undoRewarded: this.py.undosLeft === 0,
     });
-  }
-
-  /** «Отменить ходы»: откатываемся, пока снова можно выиграть (или пока есть отмены). */
-  private undoToLive(): void {
-    while (this.py.canUndo) {
-      this.py.undo();
-      if (!this.isDead()) break;
-    }
-    sfx.draw();
-    this.sync();
-    this.checkDead();
   }
 }

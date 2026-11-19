@@ -5,7 +5,7 @@ const films = import.meta.glob('../../assets/video/*.mp4', {
   eager: true, query: '?url&no-inline', import: 'default',
 }) as Record<string, string>;
 
-const panels = import.meta.glob('../../assets/art/comic_albion_*.webp', {
+const panels = import.meta.glob('../../assets/art/comic_*.webp', {
   eager: true, query: '?url&no-inline', import: 'default',
 }) as Record<string, string>;
 

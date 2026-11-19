@@ -7,7 +7,7 @@ import { drawSlot } from '../ui/cardLayer';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey } from '../ui/cards';
 import { CardDrag } from '../ui/drag';
 import { HintFlash, hintCard, hintSlot } from '../ui/hints';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, requestUndo, updateUndoButton, watchDead, winLevel } from '../ui/table';
 import { dialogsOpen, fadeIn, toast, txt } from '../ui/widgets';
 import { GolfGame, GolfMove, GOLF_SEEDS, solveGolf } from '../logic/golf';
 import { SpiderGame, SpiderMove, spiderHint } from '../logic/spider';
@@ -33,11 +33,10 @@ abstract class AlbionTable extends Phaser.Scene {
   private busy = false;
   private checkDead: (delay?: number) => void = () => {};
 
-  protected abstract get canUndo(): boolean;
-  protected abstract get undosLeft(): number;
+  protected abstract get undoState(): GolfGame | SpiderGame;
   protected abstract get won(): boolean;
   protected abstract get stars(): number;
-  protected abstract undo(): boolean;
+  protected abstract clearSelection(): void;
   protected abstract dead(): boolean;
   protected abstract findHint(): (() => void) | undefined;
   protected abstract renderCards(): void;
@@ -60,7 +59,8 @@ abstract class AlbionTable extends Phaser.Scene {
     this.checkDead = watchDead(this, {
       stop: () => this.finished, wait: () => this.busy, dead: () => this.dead(),
       onDead: () => lostDialog(this, this.ctx, t('game.deadTextNoHelp'), {
-        undo: this.canUndo ? () => this.tapUndo() : undefined,
+        undo: this.undoState.hasUndo ? () => void this.tapUndo() : undefined,
+        undoRewarded: this.undoState.undosLeft === 0,
       }),
     });
     this.ui.thoughts(STRIP_H + 96, () => this.inputAllowed());
@@ -83,8 +83,7 @@ abstract class AlbionTable extends Phaser.Scene {
 
   protected refresh(): void {
     this.renderCards();
-    this.undoButton.setEnabled(this.canUndo);
-    this.undoButton.setBadge(String(this.undosLeft));
+    updateUndoButton(this.undoButton, this.undoState);
     this.hintButton.setBadge(this.hints ? String(this.hints) : t('game.ad'));
     this.ui.setStars(this.stars);
   }
@@ -98,8 +97,14 @@ abstract class AlbionTable extends Phaser.Scene {
     } else this.checkDead();
   }
 
-  private tapUndo(): void {
-    if (!this.inputAllowed() || !this.undo()) return;
+  private async tapUndo(): Promise<void> {
+    if (!this.inputAllowed()) return;
+    const restored = await requestUndo(this, this.undoState, (busy) => { this.busy = busy; });
+    if (!restored) {
+      if (this.sys.isActive()) this.checkDead();
+      return;
+    }
+    this.clearSelection();
     sfx.draw();
     this.moved();
   }
@@ -167,13 +172,12 @@ export class GolfScene extends AlbionTable {
     this.refresh();
   }
 
-  protected get canUndo() { return this.gameState.canUndo; }
+  protected get undoState() { return this.gameState; }
   protected get undosLeft() { return this.gameState.undosLeft; }
   protected get won() { return this.gameState.won; }
   protected get stars() { return this.gameState.stock.length >= this.par && this.undosLeft === 3 ? 3 : this.undosLeft > 0 ? 2 : 1; }
-  protected undo(): boolean {
+  protected clearSelection(): void {
     this.solutionCache = undefined;
-    return this.gameState.undo();
   }
   protected dead(): boolean { return this.gameState.stuck; }
   private solve() { return this.solutionCache ??= solveGolf(this.gameState); }
@@ -281,13 +285,12 @@ export class SpiderScene extends AlbionTable {
     this.refresh();
   }
 
-  protected get canUndo() { return this.gameState.canUndo; }
+  protected get undoState() { return this.gameState; }
   protected get undosLeft() { return this.gameState.undosLeft; }
   protected get won() { return this.gameState.won; }
   protected get stars() { return this.gameState.turns <= this.par && this.gameState.undosLeft === 3 ? 3 : this.gameState.undosLeft > 0 ? 2 : 1; }
-  protected undo(): boolean {
+  protected clearSelection(): void {
     this.selected = undefined;
-    return this.gameState.undo();
   }
   protected dead(): boolean { return !this.gameState.won && this.gameState.options().length === 0; }
 

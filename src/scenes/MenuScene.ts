@@ -27,7 +27,8 @@ export class MenuScene extends Phaser.Scene {
     g.fillCircle(W / 2, ly + 6, 20);
     g.fillStyle(C.brass, 1);
     g.fillCircle(W / 2, ly + 6, 11);
-    txt(this, W / 2, ly + 170, t('title.main').replace(' ', '\n'), 124, C.wine, { head: true, spacing: -14 });
+    const title = txt(this, W / 2, ly + 170, t('title.main').replace(' ', '\n'), 124, C.wine, { head: true, spacing: -14 });
+    title.setScale(Math.min(1, 765 / title.width));
     g.lineStyle(3, C.brassDark, 0.8);
     g.lineBetween(250, ly + 322, 440, ly + 322);
     g.lineBetween(W - 440, ly + 322, W - 250, ly + 322);

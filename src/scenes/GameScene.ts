@@ -10,7 +10,7 @@ import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
 import { CARD_H, CARD_TEX_SCALE, CARD_W, cardInteractive, cardKey, tableAngle } from '../ui/cards';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, persp, requestUndo, updateUndoButton, watchDead, winLevel } from '../ui/table';
 import { drawPanel, fadeIn, txt } from '../ui/widgets';
 import { CardDrag } from '../ui/drag';
 
@@ -212,7 +212,7 @@ export class GameScene extends Phaser.Scene {
   }
 
   private buildHelpers(y: number): void {
-    this.undo = helperButton(this, W / 2 - 290, y, t('game.undo'), '3', 'undo', () => this.tapUndo());
+    this.undo = helperButton(this, W / 2 - 290, y, t('game.undo'), '3', 'undo', () => void this.tapUndo());
     helperButton(this, W / 2, y, t('game.joker'), t('game.ad'), 'joker', () => void this.tapJoker());
     helperButton(this, W / 2 + 290, y, t('game.plus5'), t('game.ad'), 'plus_cards', () => void this.tapPlus5());
   }
@@ -345,8 +345,7 @@ export class GameScene extends Phaser.Scene {
     this.stockBacks[1].setVisible(n > 1);
     this.stockBacks[0].setVisible(n > 2);
     this.stockEmpty.setVisible(n === 0);
-    this.undo.setBadge(String(this.tp.undosLeft));
-    this.undo.setEnabled(this.tp.canUndo);
+    updateUndoButton(this.undo, this.tp);
     this.ui.setStars(starsFor(this.tp.stockLeft));
   }
 
@@ -361,9 +360,11 @@ export class GameScene extends Phaser.Scene {
 
   // ---------- помощники ----------
 
-  private tapUndo(): void {
+  private async tapUndo(): Promise<void> {
     if (this.finished || this.adBusy) return;
-    const h = this.tp.undo();
+    const h = await requestUndo(this, this.tp, (busy) => { this.adBusy = busy; });
+    if (!this.sys.isActive()) return;
+    this.checkDead();
     if (!h) {
       sfx.no();
       return;
@@ -430,18 +431,8 @@ export class GameScene extends Phaser.Scene {
           else this.onLost();
         },
       },
-      undo: this.tp.canUndo ? () => this.undoToLive() : undefined,
+      undo: this.tp.hasUndo ? () => void this.tapUndo() : undefined,
+      undoRewarded: this.tp.undosLeft === 0,
     });
-  }
-
-  /** «Отменить ходы»: откатываемся, пока снова можно выиграть (или пока есть отмены). */
-  private undoToLive(): void {
-    while (this.tp.canUndo) {
-      this.tp.undo();
-      if (!this.isDead()) break;
-    }
-    sfx.draw();
-    this.syncAll();
-    this.checkDead();
   }
 }

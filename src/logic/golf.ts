@@ -23,7 +23,9 @@ export class GolfGame {
 
   get top(): Card { return this.waste[this.waste.length - 1]; }
   get won(): boolean { return this.columns.every((column) => !column.length); }
-  get canUndo(): boolean { return this.undosLeft > 0 && this.history.length > 0; }
+  get hasUndo(): boolean { return this.history.length > 0; }
+
+  get canUndo(): boolean { return this.hasUndo && this.undosLeft > 0; }
 
   get stuck(): boolean {
     return !this.won && this.stock.length === 0 && !this.columns.some((_, col) => this.canPlay(col));
@@ -48,13 +50,13 @@ export class GolfGame {
     return true;
   }
 
-  undo(): boolean {
-    if (!this.canUndo) return false;
+  undo(rewarded = false): boolean {
+    if (!this.hasUndo || (!rewarded && !this.canUndo)) return false;
     const move = this.history.pop()!;
     const card = this.waste.pop()!;
     if (move.type === 'play') this.columns[move.col].push(card);
     else this.stock.unshift(card);
-    this.undosLeft--;
+    if (!rewarded) this.undosLeft--;
     return true;
   }
 }

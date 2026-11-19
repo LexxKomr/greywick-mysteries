@@ -12,7 +12,7 @@ import { CARD_H, CARD_W, tableAngle } from '../ui/cards';
 import { CardLayer, Placement, cardId, drawSlot } from '../ui/cardLayer';
 import { CardDrag } from '../ui/drag';
 import { HintFlash, hintCard, hintSlot } from '../ui/hints';
-import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, watchDead, winLevel } from '../ui/table';
+import { Helper, LevelCtx, LevelData, STRIP_H, TableUi, buildTable, exitDialog, helperButton, levelCtx, lostDialog, naturalTableTop, persp, requestUndo, updateUndoButton, watchDead, winLevel } from '../ui/table';
 import { fadeIn, toast } from '../ui/widgets';
 
 const CS = 1.3; // карты крупнее: столбиков всего семь
@@ -61,7 +61,7 @@ export class KlondikeScene extends Phaser.Scene {
     const seed = ctx.data.dailyDate === undefined
       ? klondikeSeed(ctx.caseData?.number ?? 0, ctx.level, difficulty)
       : dailyPreset(ctx.data.dailyDate, KLONDIKE_SEEDS[1]);
-    this.kg = new KlondikeGame(seed);
+    this.kg = new KlondikeGame(seed, 3);
     this.flash = new HintFlash(this);
     (window as unknown as { __kl: unknown }).__kl = { game: this.kg, scene: this };
 
@@ -103,7 +103,7 @@ export class KlondikeScene extends Phaser.Scene {
     this.layer = new CardLayer(this, CS, { x: sx, y: this.topY }, (img, id) => drag.add(img, id));
     this.layer.apply(this.places(), true, 14);
 
-    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, 'undo', () => this.tapUndo());
+    this.undoBtn = helperButton(this, W / 2 - 170, helpersY, t('game.undo'), null, 'undo', () => void this.tapUndo());
     this.hint = helperButton(this, W / 2 + 170, helpersY, t('game.hint'), String(FREE_HINTS), 'hint', () => void this.tapHint());
     this.refreshHud();
     this.ui.thoughts(STRIP_H + 96, () => !this.finished && !this.busy);
@@ -144,7 +144,7 @@ export class KlondikeScene extends Phaser.Scene {
 
   private refreshHud(): void {
     this.stockRing.setVisible(this.kg.stock.length === 0 && this.kg.waste.length > 0);
-    this.undoBtn.setEnabled(this.kg.canUndo);
+    updateUndoButton(this.undoBtn, this.kg);
     this.hint.setBadge(this.hintsLeft > 0 ? String(this.hintsLeft) : t('game.ad'));
     this.ui.setStars(klondikeStars(this.kg.recycles));
   }
@@ -269,25 +269,21 @@ export class KlondikeScene extends Phaser.Scene {
   }
 
   private onStuck(): void {
-    lostDialog(this, this.ctx, t('game.deadTextNoHelp'), { undo: this.kg.canUndo ? () => this.undoToLive() : undefined });
+    lostDialog(this, this.ctx, t('game.deadTextNoHelp'), {
+      undo: this.kg.hasUndo ? () => void this.tapUndo() : undefined,
+      undoRewarded: this.kg.undosLeft === 0,
+    });
   }
 
-  /** «Отменить ходы»: откатываемся, пока снова можно выиграть. */
-  private undoToLive(): void {
-    for (let n = 0; n < 60 && this.kg.canUndo; n++) {
-      this.kg.undo();
-      if (!this.isDead()) break;
-    }
-    sfx.draw();
-    this.sync();
-    this.checkDead();
-  }
 
   // ---------- помощники ----------
 
-  private tapUndo(): void {
+  private async tapUndo(): Promise<void> {
     if (this.finished || this.busy) return;
-    if (!this.kg.undo()) {
+    const restored = await requestUndo(this, this.kg, (busy) => { this.busy = busy; });
+    if (!this.sys.isActive()) return;
+    this.checkDead();
+    if (!restored) {
       sfx.no();
       return;
     }

@@ -2,7 +2,8 @@
 
 import Phaser from 'phaser';
 import { C, H, VERSION, W } from '../config';
-import { t } from '../services/i18n';
+import { syncDocumentLanguage, t } from '../services/i18n';
+import { createCardTextures } from '../ui/cards';
 import { save } from '../services/save';
 import { music } from '../services/music';
 import { Button, addBackground, fadeIn, makeButton, panel, toast, txt } from '../ui/widgets';
@@ -38,8 +39,18 @@ export class SettingsScene extends Phaser.Scene {
     // язык
     y += 270;
     txt(this, W / 2, y - 80, t('settings.lang'), 44, C.inkSoft, { bold: true });
-    makeButton(this, W / 2 - 215, y + 10, 400, 130, t('settings.langRu'), () => {}, 'primary', 46);
-    makeButton(this, W / 2 + 215, y + 10, 400, 130, t('settings.langEn'), () => {}, 'paper', 40).setEnabled(false);
+    const language = (x: number, lang: 'ru' | 'en', label: string) => {
+      makeButton(this, x, y + 10, 400, 130, t(label), () => {
+        if (save.data.lang === lang) return;
+        save.data.lang = lang;
+        save.persist();
+        syncDocumentLanguage();
+        createCardTextures(this);
+        this.scene.restart();
+      }, save.data.lang === lang ? 'primary' : 'paper', 46);
+    };
+    language(W / 2 - 215, 'ru', 'settings.langRu');
+    language(W / 2 + 215, 'en', 'settings.langEn');
 
     // сброс
     y += 250;

@@ -1,0 +1,110 @@
+{
+  "tripeaks": {
+    "name": "TriPeaks",
+    "intro": "I've played this every evening since I retired. Take a card one rank above or below the one in the waste. Any suit will do. It keeps my hands busy while I think.",
+    "rules": [
+      "Clear all the cards from the three peaks.",
+      "The stock and the waste are below the peaks. Take any uncovered card one rank above or below the top card in the waste. A six or an eight will go on a seven, regardless of suit.",
+      "Aces and kings wrap around. You can play an ace on a king and a king or a two on an ace.",
+      "Each card you take becomes the new top card in the waste. Build long streaks to save cards in the stock and earn more stars.",
+      "If you run out of matches, select the stock to turn over a new card.",
+      "A card in the peaks becomes available once both cards covering it are gone.",
+      "If the stock is empty and there are no moves left, the deal is lost.",
+      "Undo takes back the last move. A Joker matches any card. +5 cards adds five cards to the stock."
+    ],
+    "hints": [
+      "Perhaps it's time to turn over another card.",
+      "Look for a card one rank above or below the waste.",
+      "Remember, an ace can go on a king."
+    ]
+  },
+  "pyramid": {
+    "name": "Pyramid",
+    "intro": "My father taught me Pyramid on Sunday afternoons after tea. Take two uncovered cards that add up to thirteen. A king is worth thirteen on its own.",
+    "rules": [
+      "Clear the whole pyramid.",
+      "The ace is worth 1, the jack 11, the queen 12 and the king 13. Cards from two through ten are worth their printed number.",
+      "Remove two available cards that add up to 13, such as a queen and an ace, a jack and a two, or an eight and a five. Remove a king on its own.",
+      "A card in the pyramid is available when nothing covers it.",
+      "Select the stock to turn over a card. You can pair the top card in the waste with a card from the pyramid.",
+      "You can go through the stock three times. If you reach the end and no pairs remain, the deal is lost.",
+      "Earn more stars by using fewer passes through the stock.",
+      "Undo takes back the last move. Hint highlights a pair. +1 pass lets you go through the stock once more."
+    ],
+    "hints": [
+      "Thirteen. A king goes on its own.",
+      "Try the stock. You might find a match there.",
+      "A queen needs an ace and a jack needs a two."
+    ]
+  },
+  "klondike": {
+    "name": "Klondike",
+    "intro": "All the housewives in Greywick know this one. Detectives ought to know it too. One hurried move can leave you stuck, just as it can in an investigation.",
+    "rules": [
+      "Build four foundations by suit, from ace to king.",
+      "The tableau has seven columns. The last card in each column is face up.",
+      "Build down in alternating colours. A red nine goes on a black ten, then a black eight on the red nine.",
+      "You can move an entire valid run of face-up cards if its leading card fits. Removing the last face-up card in a column reveals the card underneath.",
+      "An empty column takes a king or a run starting with a king.",
+      "Send aces to the foundations, then add the two, three and remaining cards of the same suit in order.",
+      "Select the stock to turn over a card. You can turn the waste back over and go through the stock again as often as you need.",
+      "Select a card to send it to a foundation or another column if a move is available.",
+      "Use fewer passes through the stock to earn more stars.",
+      "Undo takes back the last move. Hint shows a possible move."
+    ],
+    "hints": [
+      "Is there an ace waiting for its foundation?",
+      "Try to uncover a face-down card first.",
+      "Keep the empty columns for kings."
+    ]
+  },
+  "freecell": {
+    "name": "FreeCell",
+    "intro": "Every card is in view, just like the clues on my board. It's the order that takes some thought. Keep a free cell or two for cards you haven't found a place for yet.",
+    "rules": [
+      "Build four foundations by suit, from ace to king.",
+      "All 52 cards start face up in eight columns.",
+      "Build down in alternating colours. A black jack goes on a red queen, then a red ten on the black jack.",
+      "Each of the four free cells can hold one card. You can move it back to a column or to a foundation later.",
+      "An empty column can take any card.",
+      "Select a card to move it to a foundation, a matching column or a free cell. You can move a run if you have enough empty columns and free cells. If all are occupied, you can only move one card at a time.",
+      "Start each foundation with an ace, then build up in the same suit.",
+      "Win in fewer moves to earn more stars.",
+      "Undo takes back the last move. Hint shows a possible move."
+    ],
+    "hints": [
+      "Free the aces first.",
+      "Don't fill all your free cells at once.",
+      "An empty column is worth more than a free cell."
+    ]
+  },
+  "golf": {
+    "name": "Golf",
+    "intro": "Take the last card in any column if it's one rank above or below the waste. When you run out of matches, turn a card from the stock. Clear the table to win.",
+    "rules": [
+      "Clear all seven columns. You can only take the exposed card at the bottom of each column.",
+      "Take a card one rank above or below the waste. Suit doesn't matter. A six or an eight will go on a seven. An ace only matches a two, and a king only matches a queen.",
+      "Select a matching card or drag it onto the waste. It becomes the new top card. Select the stock when you need a different rank.",
+      "You get one pass through the stock. Save cards in the stock and use fewer undos to earn more stars."
+    ],
+    "hints": [
+      "Look at the exposed cards. You need one rank higher or lower.",
+      "If there's no match, turn over a card from the stock."
+    ]
+  },
+  "spider": {
+    "name": "Spider",
+    "intro": "Build runs of spades down from king to ace. A complete run clears itself. Before dealing another row, make sure there's a card in every column.",
+    "rules": [
+      "Build eight full runs from king down to ace. All cards are spades. A complete run is removed automatically.",
+      "Move one face-up card or an unbroken descending run onto a card one rank higher. For example, you can move a nine and eight together onto a ten.",
+      "An empty column takes any face-up card or descending run. Select a run and its destination, or drag it into place. A face-down card turns over when it is uncovered.",
+      "The stock deals one card to each column. Fill empty columns first. The stock has five rows.",
+      "Complete the runs in fewer moves and use fewer undos to earn more stars."
+    ],
+    "hints": [
+      "Try turning over a face-down card or joining two runs.",
+      "Build what you can before dealing another row."
+    ]
+  }
+}

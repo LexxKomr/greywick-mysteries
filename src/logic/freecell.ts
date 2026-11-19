@@ -27,7 +27,7 @@ export class FreeCellGame {
   moves = 0;
   private history: Snapshot[] = [];
 
-  constructor(seed: number) {
+  constructor(seed: number, public undosLeft = Infinity) {
     shuffledDeck(seed).forEach((c, i) => this.cols[i % 8].push(c));
   }
 
@@ -52,12 +52,13 @@ export class FreeCellGame {
     if (this.history.length > 500) this.history.shift();
   }
 
-  get canUndo(): boolean {
-    return this.history.length > 0 && !this.won;
-  }
+  get hasUndo(): boolean { return this.history.length > 0 && !this.won; }
 
-  undo(): boolean {
-    if (!this.canUndo) return false;
+  get canUndo(): boolean { return this.hasUndo && this.undosLeft > 0; }
+
+  undo(rewarded = false): boolean {
+    if (!this.hasUndo || (!rewarded && !this.canUndo)) return false;
+    if (!rewarded) this.undosLeft--;
     // откатываем ход игрока вместе с авто-сбором, который за ним последовал
     for (;;) {
       const h = this.history.pop()!;
