@@ -118,7 +118,7 @@ export class FreeCellScene extends Phaser.Scene {
   }
 
   private refreshHud(): void {
-    this.undoBtn.button.setAlpha(this.fc.canUndo ? 1 : 0.55);
+    this.undoBtn.setEnabled(this.fc.canUndo);
     this.hint.setBadge(this.hintsLeft > 0 ? String(this.hintsLeft) : t('game.ad'));
     this.ui.setStars(freecellStars(this.fc.moves));
   }

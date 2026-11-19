@@ -2,11 +2,13 @@
 
 import Phaser from 'phaser';
 import { C, H, VERSION, W } from '../config';
-import { startDaily } from '../flow';
+import { continueCase, startDaily } from '../flow';
 import { dailySeed } from '../logic/generator';
 import { t } from '../services/i18n';
+import { currentCase } from '../services/cases';
 import { save } from '../services/save';
 import { addBackground, drawPanel, fadeIn, makeButton, txt } from '../ui/widgets';
+import { confirmProgressReset } from '../ui/progress';
 
 export class MenuScene extends Phaser.Scene {
   constructor() {
@@ -43,6 +45,12 @@ export class MenuScene extends Phaser.Scene {
     makeButton(this, W / 2, y, 600, 130, dailyDone ? t('menu.dailyDone') : t('menu.daily'), () => void startDaily(this));
     y += 165;
     makeButton(this, W / 2, y, 600, 130, t('menu.settings'), () => this.scene.start('Settings'));
+    y += 158;
+    makeButton(this, W / 2, y, 480, 100, t('menu.restart'), () => confirmProgressReset(this, () => {
+      const first = currentCase();
+      if (first) continueCase(this, first);
+      else this.scene.start('Map');
+    }), 'dark', 42);
 
     txt(this, W - 24, H - 20, 'v' + VERSION, 30, C.paperLight, { ox: 1, oy: 1 }).setAlpha(0.6);
   }

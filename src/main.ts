@@ -12,6 +12,7 @@ import '@fontsource/pt-serif/latin-400-italic.css';
 
 import { C, H, W, initHeight } from './config';
 import { save } from './services/save';
+import { music } from './services/music';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
 import { MapScene } from './scenes/MapScene';
@@ -41,6 +42,7 @@ async function loadFonts(): Promise<void> {
 
 async function start(): Promise<void> {
   save.load();
+  music.init();
   initHeight();
   await loadFonts();
   const game = new Phaser.Game({

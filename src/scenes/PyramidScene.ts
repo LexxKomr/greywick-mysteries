@@ -300,7 +300,7 @@ export class PyramidScene extends Phaser.Scene {
     this.stockEmpty.setAlpha(this.py.canDraw ? 1 : 0.35);
     this.passText.setText(t('game.pass', { n: this.py.pass, total: this.py.maxPasses }).replace(' ', '\n'));
     this.undo.setBadge(String(this.py.undosLeft));
-    this.undo.button.setAlpha(this.py.canUndo ? 1 : 0.55);
+    this.undo.setEnabled(this.py.canUndo);
     this.hint.setBadge(this.hintsLeft > 0 ? String(this.hintsLeft) : t('game.ad'));
     this.ui.setStars(pyramidStars(this.py.pass));
   }

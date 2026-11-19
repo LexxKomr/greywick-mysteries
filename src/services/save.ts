@@ -14,6 +14,7 @@ export interface CaseProgress {
 export interface SaveData {
   v: 1;
   sound: boolean;
+  music: boolean;
   lang: 'ru' | 'en';
   cases: Record<string, CaseProgress>;
   /** сколько партий выиграно всего (для показа рекламы после каждой второй) */
@@ -52,7 +53,7 @@ const localBackend: Backend = {
 let backend: Backend = localBackend;
 
 function fresh(): SaveData {
-  return { v: 1, sound: true, lang: 'ru', cases: {}, wins: 0, adDue: false, daily: null, seen: [] };
+  return { v: 1, sound: true, music: true, lang: 'ru', cases: {}, wins: 0, adDue: false, daily: null, seen: [] };
 }
 
 class Save {
@@ -64,7 +65,9 @@ class Save {
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw);
-      if (parsed && parsed.v === 1) this.data = { ...fresh(), ...parsed };
+      if (parsed && parsed.v === 1) {
+        this.data = { ...fresh(), ...parsed, music: parsed.music ?? parsed.sound ?? true };
+      }
     } catch {
       /* испорченное сохранение — начинаем заново */
     }
@@ -142,8 +145,8 @@ class Save {
   }
 
   reset(): void {
-    const { sound, lang } = this.data;
-    this.data = { ...fresh(), sound, lang };
+    const { sound, music, lang } = this.data;
+    this.data = { ...fresh(), sound, music, lang };
     this.persist();
   }
 }

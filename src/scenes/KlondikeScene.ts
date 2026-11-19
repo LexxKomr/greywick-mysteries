@@ -72,7 +72,8 @@ export class KlondikeScene extends Phaser.Scene {
     const g = this.add.graphics();
     for (let i = 0; i < 4; i++) {
       drawSlot(g, X0 + i * STEP, this.topY, CW, CH);
-      this.add.image(persp.x(X0 + i * STEP, this.topY), this.topY, 'suit_' + i).setAlpha(0.4).setScale(persp.s(this.topY), persp.s(this.topY) * 0.88);
+      this.add.image(persp.x(X0 + i * STEP, this.topY), this.topY, 'suit_' + i)
+        .setAlpha(0.84).setScale(persp.s(this.topY) * 0.84, persp.s(this.topY) * 0.74);
     }
     drawSlot(g, X0 + 5 * STEP, this.topY, CW, CH, 0.25);
     drawSlot(g, X0 + 6 * STEP, this.topY, CW, CH, 0.5);
@@ -137,7 +138,7 @@ export class KlondikeScene extends Phaser.Scene {
 
   private refreshHud(): void {
     this.stockRing.setVisible(this.kg.stock.length === 0 && this.kg.waste.length > 0);
-    this.undoBtn.button.setAlpha(this.kg.canUndo ? 1 : 0.55);
+    this.undoBtn.setEnabled(this.kg.canUndo);
     this.hint.setBadge(this.hintsLeft > 0 ? String(this.hintsLeft) : t('game.ad'));
     this.ui.setStars(klondikeStars(this.kg.recycles));
   }

@@ -106,7 +106,7 @@ export class GameScene extends Phaser.Scene {
   private showFirstMove(): void {
     if (this.finished || save.data.seen.includes('tripeaks')) return;
     const frame = this.add.graphics();
-    const label = txt(this, W / 2, STRIP_H + 100, '', 40, C.ink, { wrap: 780, spacing: 4 });
+    const label = txt(this, W / 2, 0, '', 40, C.ink, { wrap: 780, spacing: 4 });
     const layer = this.add.container(0, 0, [frame, label]).setDepth(300);
     this.firstMoveGuide = { layer, frame, label };
     this.refreshFirstMove();
@@ -121,7 +121,10 @@ export class GameScene extends Phaser.Scene {
     const size = hasMatch ? this.hs[card] : BIG;
     label.setText(t(hasMatch ? 'rules.firstPlay' : 'rules.firstDraw'));
     frame.clear();
-    drawPanel(frame, 110, STRIP_H + 25, W - 220, 150, 26);
+    const top = STRIP_H + 25;
+    const height = label.height + 52;
+    drawPanel(frame, 110, top, W - 220, height, 26);
+    label.setY(top + height / 2);
     const border = (x: number, y: number, scale: number) => {
       const w = CARD_W * scale + 12;
       const h = CARD_H * scale + 12;
@@ -343,7 +346,7 @@ export class GameScene extends Phaser.Scene {
     this.stockBacks[0].setVisible(n > 2);
     this.stockEmpty.setVisible(n === 0);
     this.undo.setBadge(String(this.tp.undosLeft));
-    this.undo.button.setAlpha(this.tp.canUndo ? 1 : 0.55);
+    this.undo.setEnabled(this.tp.canUndo);
     this.ui.setStars(starsFor(this.tp.stockLeft));
   }
 

@@ -193,29 +193,37 @@ export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, on
 }
 
 export interface Helper {
-  button: Phaser.GameObjects.Container;
+  setEnabled(enabled: boolean): void;
   setBadge(s: string): void;
 }
 
-/** Круглая кожаная кнопка помощника с подписью снизу и бейджем (число или «реклама»). */
+/** Кнопка помощника с подписью и жетоном оставшихся использований. */
 export function helperButton(scene: Phaser.Scene, x: number, y: number, label: string, badge: string | null, draw: (g: Phaser.GameObjects.Graphics) => void, onClick: () => void): Helper {
   const button = roundButton(scene, x, y, 80, draw, onClick);
   const lt = txt(scene, x, y + 108, label, 36, C.paperLight, { head: true });
   lt.setShadow(0, 3, '#000000', 8, false, true);
   const bg = scene.add.graphics();
   const bt = txt(scene, x + 62, y - 66, badge ?? '', 28, C.paperLight, { bold: true }).setDepth(2);
+  let enabled = true;
   const paint = () => {
     bg.clear();
     if (!bt.text) return;
     const bw = Math.max(52, bt.width + 24);
     bg.fillStyle(C.brassDark, 1);
     bg.fillRoundedRect(x + 62 - bw / 2 - 2, y - 66 - 26, bw + 4, 52, 26);
-    bg.fillStyle(C.wine, 1);
+    bg.fillStyle(enabled ? C.wine : C.night, 1);
     bg.fillRoundedRect(x + 62 - bw / 2, y - 66 - 24, bw, 48, 24);
   };
   paint();
   return {
-    button,
+    setEnabled(on) {
+      if (enabled === on) return;
+      enabled = on;
+      button.setEnabled(on);
+      lt.setAlpha(on ? 1 : 0.66);
+      bt.setAlpha(on ? 1 : 0.72);
+      paint();
+    },
     setBadge(s: string) {
       bt.setText(s);
       paint();

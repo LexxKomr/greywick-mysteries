@@ -89,23 +89,30 @@ export interface Button extends Phaser.GameObjects.Container {
 /** Крупная скруглённая кнопка. (x, y) — центр. */
 export function makeButton(scene: Scene, x: number, y: number, w: number, h: number, label: string, onClick: () => void, style: ButtonStyle = 'paper', size?: number): Button {
   const g = scene.add.graphics();
-  const r = Math.min(h / 2, 46);
-  const fill = style === 'primary' ? C.wine : style === 'dark' ? C.nightSoft : C.paper;
+  const r = Math.min(h / 2, 30);
+  const fill = style === 'primary' ? C.wine : style === 'dark' ? C.night : C.paper;
   const textColor = style === 'paper' ? C.wine : C.paperLight;
   g.fillStyle(0x000000, 0.4);
   g.fillRoundedRect(-w / 2 + 2, -h / 2 + 9, w, h, r);
-  g.fillStyle(C.brassDark, 1);
-  g.fillRoundedRect(-w / 2, -h / 2, w, h, r);
-  g.fillStyle(C.brass, 1);
-  g.fillRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, r - 1);
-  g.fillStyle(fill, 1);
-  g.fillRoundedRect(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16, Math.max(4, r - 7));
-  g.fillStyle(0xffffff, style === 'paper' ? 0.25 : 0.1);
-  g.fillRoundedRect(-w / 2 + 14, -h / 2 + 12, w - 28, h * 0.32, Math.max(4, r - 14));
+  const parts: Phaser.GameObjects.GameObject[] = [g];
+  if (style === 'primary' && scene.textures.exists('button_enamel_wide')) {
+    const key = 'button_enamel_wide';
+    const skin = scene.game.renderer.type === Phaser.WEBGL
+      ? scene.add.nineslice(0, 0, key, undefined, w, h, 42, 42, 24, 24)
+      : scene.add.image(0, 0, key).setDisplaySize(w, h);
+    parts.push(skin);
+  } else {
+    g.fillStyle(fill, 1);
+    g.fillRoundedRect(-w / 2, -h / 2, w, h, r);
+    g.lineStyle(4, C.brass, 1);
+    g.strokeRoundedRect(-w / 2 + 2, -h / 2 + 2, w - 4, h - 4, r - 2);
+    g.lineStyle(2, C.brassDark, 0.76);
+    g.strokeRoundedRect(-w / 2 + 9, -h / 2 + 9, w - 18, h - 18, r - 9);
+  }
   const text = txt(scene, 0, -3, label, size ?? Math.round(h * 0.42), textColor, { head: true });
   const fit = () => text.setScale(Math.min(1, (w - 60) / Math.max(1, text.width / text.scaleX)));
   fit();
-  const c = scene.add.container(x, y, [g, text]) as Button;
+  const c = scene.add.container(x, y, [...parts, text]) as Button;
   c.setSize(w, h);
   c.setInteractive({ useHandCursor: true });
   let armed = false;
@@ -140,28 +147,29 @@ export function makeButton(scene: Scene, x: number, y: number, w: number, h: num
 }
 
 /** Круглая кнопка со значком (значок рисует функция draw). */
-export function roundButton(scene: Scene, x: number, y: number, radius: number, draw: (g: G) => void, onClick: () => void, fill: number = C.wood): Phaser.GameObjects.Container {
+interface RoundButton extends Phaser.GameObjects.Container {
+  setEnabled(enabled: boolean): void;
+}
+
+export function roundButton(scene: Scene, x: number, y: number, radius: number, draw: (g: G) => void, onClick: () => void): RoundButton {
   const g = scene.add.graphics();
   const shadow = scene.add.graphics();
   shadow.fillStyle(0x000000, 0.4);
   shadow.fillCircle(2, 8, radius);
   const parts: Phaser.GameObjects.GameObject[] = [shadow];
-  if (scene.textures.exists('button_round')) {
-    // кожаная кнопка с латунным ободком (картинка), значок рисует код
-    parts.push(scene.add.image(0, 0, 'button_round').setDisplaySize(radius * 2 + 6, radius * 2 + 6));
+  if (scene.textures.exists('button_enamel_round')) {
+    parts.push(scene.add.image(0, 0, 'button_enamel_round').setDisplaySize(radius * 2 + 6, radius * 2 + 6));
   } else {
     shadow.fillStyle(C.brassDark, 1);
     shadow.fillCircle(0, 0, radius);
     shadow.fillStyle(C.brass, 1);
     shadow.fillCircle(0, 0, radius - 2);
-    shadow.fillStyle(fill, 1);
+    shadow.fillStyle(C.night, 1);
     shadow.fillCircle(0, 0, radius - 8);
   }
   draw(g);
-  // у картинки кнопки снизу толще бортик, кожаный круг выше середины — значок поднимаем к его центру
-  if (scene.textures.exists('button_round')) g.y = -radius * 0.12;
   parts.push(g);
-  const c = scene.add.container(x, y, parts);
+  const c = scene.add.container(x, y, parts) as RoundButton;
   c.setSize(radius * 2 + 16, radius * 2 + 16);
   c.setInteractive({ useHandCursor: true });
   let armed = false;
@@ -180,6 +188,14 @@ export function roundButton(scene: Scene, x: number, y: number, radius: number, 
     sfx.click();
     onClick();
   });
+  c.setEnabled = (enabled) => {
+    if (c.input!.enabled === enabled) return;
+    if (enabled) c.setInteractive({ useHandCursor: true });
+    else c.disableInteractive();
+    g.setAlpha(enabled ? 1 : 0.42);
+    armed = false;
+    c.setScale(1);
+  };
   return c;
 }
 
@@ -189,7 +205,7 @@ export function drawHome(g: G): void {
   g.fillStyle(C.paperLight, 1);
   g.fillTriangle(-29, -2, 0, -28, 29, -2);
   g.fillRect(-20, -4, 40, 32);
-  g.fillStyle(C.wood, 1);
+  g.fillStyle(C.night, 1);
   g.fillRect(-7, 10, 14, 18);
 }
 

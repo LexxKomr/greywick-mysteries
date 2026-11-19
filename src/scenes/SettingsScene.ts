@@ -4,8 +4,9 @@ import Phaser from 'phaser';
 import { C, H, VERSION, W } from '../config';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
-import { sfx } from '../services/sfx';
-import { Button, addBackground, fadeIn, makeButton, panel, showDialog, toast, txt } from '../ui/widgets';
+import { music } from '../services/music';
+import { Button, addBackground, fadeIn, makeButton, panel, toast, txt } from '../ui/widgets';
+import { confirmProgressReset } from '../ui/progress';
 
 export class SettingsScene extends Phaser.Scene {
   constructor() {
@@ -21,14 +22,18 @@ export class SettingsScene extends Phaser.Scene {
 
     // звук
     let y = top + 270;
-    txt(this, W / 2, y - 80, t('settings.sound'), 44, C.inkSoft, { bold: true });
-    const soundLabel = () => (save.data.sound ? t('settings.on') : t('settings.off'));
-    const sound: Button = makeButton(this, W / 2, y + 10, 620, 130, soundLabel(), () => {
-      save.data.sound = !save.data.sound;
-      save.persist();
-      sound.setLabel(soundLabel());
-      sfx.click();
-    });
+    const toggle = (x: number, key: 'sound' | 'music') => {
+      txt(this, x, y - 80, t(`settings.${key}`), 42, C.inkSoft, { bold: true });
+      const label = () => t(save.data[key] ? 'settings.on' : 'settings.off');
+      const btn: Button = makeButton(this, x, y + 10, 380, 130, label(), () => {
+        save.data[key] = !save.data[key];
+        save.persist();
+        btn.setLabel(label());
+        if (key === 'music') music.sync();
+      }, 'paper', 44);
+    };
+    toggle(W / 2 - 215, 'sound');
+    toggle(W / 2 + 215, 'music');
 
     // язык
     y += 270;
@@ -38,18 +43,9 @@ export class SettingsScene extends Phaser.Scene {
 
     // сброс
     y += 250;
-    makeButton(this, W / 2, y + 10, 620, 120, t('settings.reset'), () => {
-      showDialog(this, t('settings.resetTitle'), t('settings.resetText'), [
-        { label: t('settings.resetNo'), style: 'primary', onClick: () => {} },
-        {
-          label: t('settings.resetYes'),
-          onClick: () => {
-            save.reset();
-            toast(this, t('settings.resetDone'));
-          },
-        },
-      ]);
-    }, 'paper', 46);
+    makeButton(this, W / 2, y + 10, 620, 120, t('settings.reset'), () => (
+      confirmProgressReset(this, () => toast(this, t('settings.resetDone')))
+    ), 'paper', 46);
 
     makeButton(this, W / 2, top + 1000, 620, 140, t('settings.back'), () => this.scene.start('Menu'), 'primary', 56);
     txt(this, W / 2, top + 1160, `${t('title.main')} · v${VERSION}`, 32, C.paperLight).setAlpha(0.7);

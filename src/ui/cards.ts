@@ -51,8 +51,8 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 /** Масти рисуются линиями, чтобы на всех телефонах выглядели одинаково. */
-export function drawSuit(ctx: CanvasRenderingContext2D, suit: number, cx: number, cy: number, s: number): void {
-  ctx.fillStyle = suit === 1 || suit === 2 ? RED : BLACK;
+export function drawSuit(ctx: CanvasRenderingContext2D, suit: number, cx: number, cy: number, s: number, color = suit === 1 || suit === 2 ? RED : BLACK): void {
+  ctx.fillStyle = color;
   ctx.beginPath();
   if (suit === 1) {
     ctx.moveTo(cx, cy + 0.46 * s);
@@ -323,7 +323,7 @@ export function createCardTextures(scene: Phaser.Scene): void {
     const key = 'suit_' + suit;
     if (scene.textures.exists(key)) scene.textures.remove(key);
     const tex = scene.textures.createCanvas(key, 120, 120)!;
-    drawSuit(tex.getContext(), suit, 60, 60, 96);
+    drawSuit(tex.getContext(), suit, 60, 60, 96, suit === 1 || suit === 2 ? '#efb2a1' : '#f1d7a2');
     tex.refresh();
   }
   make('card_back', paintBack);

@@ -130,11 +130,11 @@ export function showIntro(scene: Phaser.Scene, kind: GameKind, onClose: () => vo
 
 const shownThoughts: Record<string, Set<string>> = {};
 const hintIndex: Record<string, number> = {};
-let lastBubbleAt = 0;
+let lastThoughtAt = -Infinity;
 
-const IDLE_THOUGHT_MS = 9000;
+const CHECK_MS = 500;
 const IDLE_HINT_MS = 18000;
-const BETWEEN_MS = 35000;
+const BETWEEN_THOUGHTS_MS = 45000;
 const SHOW_MS = 5500;
 
 function pickThought(c: CaseData): string | null {
@@ -154,25 +154,21 @@ function pickThought(c: CaseData): string | null {
 }
 
 /**
- * Следит за простоем и показывает облачко: мысль о найденных уликах (простой 9 секунд,
- * не чаще раза в 35 секунд) или подсказку по игре (простой 18 секунд).
+ * Мысли о деле появляются во время игры через случайные интервалы.
+ * После 18 секунд без действий Эдит даёт подсказку и ждёт нового действия.
  * y — центр облачка по вертикали; canShow — можно ли показывать сейчас.
  */
 export function attachThoughts(scene: Phaser.Scene, c: CaseData | null, kind: GameKind, y: number, canShow: () => boolean): void {
-  let lastActivity = scene.time.now;
-  let thoughtGiven = false;
+  let idleMs = 0;
+  let untilThought = Phaser.Math.Between(26_000, 42_000);
   let hintGiven = false;
   let bubble: Phaser.GameObjects.Container | null = null;
   let hideEvent: Phaser.Time.TimerEvent | null = null;
-  let shownAt = 0;
 
   const hide = () => {
     hideEvent?.remove();
     hideEvent = null;
     if (!bubble) return;
-    // пока облачко было на экране, таймер простоя стоял
-    const now = scene.time.now;
-    lastActivity += Math.max(0, now - Math.max(shownAt, lastActivity));
     const b = bubble;
     bubble = null;
     scene.tweens.add({ targets: b, alpha: 0, duration: 200, onComplete: () => b.destroy() });
@@ -201,34 +197,35 @@ export function attachThoughts(scene: Phaser.Scene, c: CaseData | null, kind: Ga
     const hit = scene.add.zone(20, -Math.max(bh, 132) / 2, bx + bw - 20, Math.max(bh, 132)).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     hit.on('pointerdown', () => hide());
     bubble = scene.add.container(0, y, [g, face, text, hit]).setDepth(450).setAlpha(0);
-    shownAt = scene.time.now;
     scene.tweens.add({ targets: bubble, alpha: 1, duration: 250 });
     hideEvent = scene.time.delayedCall(SHOW_MS + (line.length > 80 ? 2000 : 0), hide);
-    lastBubbleAt = Date.now();
   };
 
   scene.input.on('pointerdown', () => {
-    lastActivity = scene.time.now;
-    thoughtGiven = false;
+    idleMs = 0;
     hintGiven = false;
   });
 
   scene.time.addEvent({
-    delay: 1000,
+    delay: CHECK_MS,
     loop: true,
     callback: () => {
       if (bubble || dialogsOpen() > 0 || !canShow()) return;
-      const idle = scene.time.now - lastActivity;
-      if (idle >= IDLE_HINT_MS && !hintGiven) {
+      idleMs += CHECK_MS;
+      untilThought -= CHECK_MS;
+      if (idleMs >= IDLE_HINT_MS && !hintGiven) {
         hintGiven = true;
         const hints = rulesFor(kind).hints;
         const i = hintIndex[kind] ?? 0;
         hintIndex[kind] = (i + 1) % hints.length;
         show(hints[i]);
-      } else if (idle >= IDLE_THOUGHT_MS && !thoughtGiven && c && Date.now() - lastBubbleAt >= BETWEEN_MS) {
-        thoughtGiven = true;
+      } else if (c && idleMs < IDLE_HINT_MS && untilThought <= 0 && performance.now() - lastThoughtAt >= BETWEEN_THOUGHTS_MS) {
         const line = pickThought(c);
-        if (line) show(line);
+        untilThought = Phaser.Math.Between(BETWEEN_THOUGHTS_MS, 75_000);
+        if (line) {
+          lastThoughtAt = performance.now();
+          show(line);
+        }
       }
     },
   });
