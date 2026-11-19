@@ -8,6 +8,7 @@ import { AccusationDraft, caseState, Clue, getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
+import { drawThread } from '../ui/thread';
 import { drawStar, fadeIn, makeButton, panel, roundButton, toast, txt } from '../ui/widgets';
 
 interface BoardData {
@@ -120,17 +121,7 @@ export class BoardScene extends Phaser.Scene {
       const sameRow = Math.floor(i / COLS) === Math.floor((i + 1) / COLS);
       const leftSide = a.x < W / 2;
       const lane = leftSide ? cork.x0 + 8 : cork.x1 - 8;
-      const turnX = lane + (leftSide ? 13 : -13);
-      const pts = sameRow
-        ? new Phaser.Curves.QuadraticBezier(start, new Phaser.Math.Vector2((a.x + b.x) / 2, (a.y + b.y) / 2 + 15), end).getPoints(18)
-        : [start, new Phaser.Math.Vector2(turnX, a.y), new Phaser.Math.Vector2(lane, a.y + 15),
-          new Phaser.Math.Vector2(lane, b.y - 15), new Phaser.Math.Vector2(turnX, b.y), end];
-      thread.lineStyle(10, 0x281019, 0.58);
-      thread.strokePoints(pts.map((p) => new Phaser.Math.Vector2(p.x + 2, p.y + 3)));
-      thread.lineStyle(6, 0x9f213c, 1);
-      thread.strokePoints(pts);
-      thread.lineStyle(2, 0xec6982, 0.75);
-      thread.strokePoints(pts.map((p) => new Phaser.Math.Vector2(p.x - 1, p.y - 1)));
+      drawThread(thread, start, end, sameRow ? undefined : lane);
     }
     // кнопки-гвоздики — поверх нити
     const pg = this.add.graphics().setDepth(21);
@@ -215,14 +206,14 @@ export class BoardScene extends Phaser.Scene {
 
     if (found) {
       if (!selecting) {
-        for (let k = 0; k < 3; k++) drawStar(g, (k - 1) * 32, h / 2 - 25, 11, k < starCount);
+        for (let k = 0; k < 3; k++) drawStar(g, (k - 1) * 32, h / 2 - 30, 11, k < starCount);
       }
       const textOnly = selecting && Boolean(clue.fact);
       if (!textOnly) {
         const img = Math.round(h * 0.42);
         cont.add(this.add.image(0, -h * 0.205, clue.image).setDisplaySize(img, img));
       }
-      const titleY = textOnly ? -h * 0.17 : h * 0.155;
+      const titleY = textOnly ? -h * 0.17 : h * 0.142;
       const title = txt(this, 0, titleY, clue.title, textOnly ? 30 : 25, C.wine, { head: true, wrap: w - 30, spacing: -4 });
       title.setScale(Math.min(1, h * (textOnly ? 0.28 : 0.30) / title.height));
       cont.add(title);

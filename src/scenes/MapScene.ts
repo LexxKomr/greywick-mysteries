@@ -7,7 +7,14 @@ import { CaseData, caseByNumber, caseState, world } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { sfx } from '../services/sfx';
+import { makeMapHalo } from '../ui/mapHalo';
 import { Button, drawPanel, drawStar, fadeIn, makeButton, roundButton, txt } from '../ui/widgets';
+
+type MapMarker = {
+  medal: Phaser.GameObjects.Image;
+  halo: Phaser.GameObjects.Image;
+  texture: string;
+};
 
 export class MapScene extends Phaser.Scene {
   private selected = 1;
@@ -16,7 +23,7 @@ export class MapScene extends Phaser.Scene {
   private infoStatus!: Phaser.GameObjects.Text;
   private mainButton!: Button;
   private boardButton!: Button;
-  private rings: Phaser.GameObjects.Graphics[] = [];
+  private markers: MapMarker[] = [];
 
   constructor() {
     super('Map');
@@ -24,7 +31,7 @@ export class MapScene extends Phaser.Scene {
 
   create(): void {
     fadeIn(this);
-    this.rings = [];
+    this.markers = [];
     this.add.rectangle(W / 2, H / 2, W, H, C.paper);
     const map = this.add.image(0, 0, 'map').setOrigin(0, 0);
     map.setDisplaySize(W, world.mapHeight);
@@ -75,57 +82,55 @@ export class MapScene extends Phaser.Scene {
   private addMarker(n: number, x: number, y: number): void {
     const c = caseByNumber(n);
     const state = c ? caseState(c) : null;
-    const R = 58;
-    const ring = this.add.graphics();
-    ring.lineStyle(10, C.gold, 1);
-    ring.strokeCircle(x, y, R + 14);
-    ring.setVisible(false);
-    this.rings[n] = ring;
-    this.tweens.add({ targets: ring, alpha: 0.35, duration: 700, yoyo: true, repeat: -1 });
-
+    const R = 66;
+    const halo = makeMapHalo(this, x, y);
     const g = this.add.graphics();
-    // табличка под медальоном
-    const pw = c ? 284 : 190;
-    const ph = c ? 152 : 100;
-    const top = y + R - 14;
-    g.fillStyle(0x000000, 0.35);
-    g.fillRoundedRect(x - pw / 2 + 3, top + 7, pw, ph, 16);
-    g.fillStyle(C.brassDark, 1);
-    g.fillRoundedRect(x - pw / 2, top, pw, ph, 16);
-    g.fillStyle(c ? C.paperLight : 0xcfd3d2, 1);
-    g.fillRoundedRect(x - pw / 2 + 4, top + 4, pw - 8, ph - 8, 13);
-    // медальон
-    g.fillStyle(0x000000, 0.4);
-    g.fillCircle(x + 2, y + 7, R);
-    g.fillStyle(C.brassDark, 1);
-    g.fillCircle(x, y, R);
-    g.fillStyle(c ? C.brassLight : 0x8d949a, 1);
-    g.fillCircle(x, y, R - 5);
-    g.fillStyle(c ? (state === 'closed' ? C.wine : C.night) : 0x5d666d, 1);
-    g.fillCircle(x, y, R - 14);
-    if (c) {
-      this.add.image(x, y, 'glyph_search').setDisplaySize(63, 63);
-    } else {
-      g.lineStyle(7, 0xd4d9dc, 1);
-      g.beginPath();
-      g.arc(x, y - 8, 12, Math.PI, 0, false);
-      g.strokePath();
-      g.fillStyle(0xd4d9dc, 1);
-      g.fillRoundedRect(x - 19, y - 7, 38, 30, 5);
-    }
+    const ribbonY = y - R - 21;
+    const half = c ? 88 : 73;
+    const pts = [
+      new Phaser.Math.Vector2(x - half, ribbonY - 23),
+      new Phaser.Math.Vector2(x + half, ribbonY - 23),
+      new Phaser.Math.Vector2(x + half - 12, ribbonY),
+      new Phaser.Math.Vector2(x + half, ribbonY + 23),
+      new Phaser.Math.Vector2(x - half, ribbonY + 23),
+      new Phaser.Math.Vector2(x - half + 12, ribbonY),
+    ];
+    g.fillStyle(0x221b14, 0.35);
+    g.fillPoints(pts.map((p) => new Phaser.Math.Vector2(p.x + 1, p.y + 4)), true);
+    g.fillStyle(c ? C.wineDark : 0x454b4d, 1);
+    g.fillPoints(pts, true);
+    g.lineStyle(2, c ? C.brass : 0x868d8e, 0.9);
+    g.strokePoints(pts, true);
+    txt(this, x, ribbonY - 1, t('map.caseShort', { n }), 28, C.paperLight, { head: true });
+
+    const pw = c ? 249 : 144;
+    const ph = c ? 80 : 43;
+    const top = y + R + 8;
+    g.fillStyle(0x211a16, 0.50);
+    g.fillRoundedRect(x - pw / 2 + 2, top + 4, pw, ph, 11);
+    g.fillStyle(c ? 0x422b21 : 0x454b4d, 0.97);
+    g.fillRoundedRect(x - pw / 2, top, pw, ph, 10);
+    g.lineStyle(2, c ? C.brass : 0x929798, 0.82);
+    g.strokeRoundedRect(x - pw / 2 + 3, top + 3, pw - 6, ph - 6, 8);
+
+    const texture = !c ? 'map_medal_locked' : state === 'closed' ? 'map_medal_closed' : 'map_medal_available';
+    g.fillStyle(0x20170f, 0.4);
+    g.fillEllipse(x + 3, y + 50, 125, 38);
+    const medal = this.add.image(x, y, texture).setDisplaySize(2 * R, 2 * R);
+    this.markers[n] = { medal, halo, texture };
 
     if (c) {
       const total = c.clues.length;
-      txt(this, x, top + 54, t('map.caseShort', { n }), 34, C.wine, { head: true });
-      txt(this, x, top + 90, t('map.cluesShort', { found: save.found(c.id, total), total }), 30, C.ink);
-      const st = txt(this, x + 18, top + 124, t('map.starsShort', { n: save.totalStars(c.id, total), total: total * 3 }), 30, C.ink, { bold: true });
-      drawStar(g, x - st.width / 2 - 6, top + 122, 15);
+      txt(this, x, top + 23, t('map.cluesShort', { found: save.found(c.id, total), total }), 28, C.paperLight);
+      const st = txt(this, x + 13, top + 55, t('map.starsShort', { n: save.totalStars(c.id, total), total: total * 3 }), 26, C.brassLight, { bold: true });
+      drawStar(g, x - st.width / 2 - 7, top + 54, 12);
     } else {
-      txt(this, x, top + 48, t('map.caseShort', { n }), 30, 0x4b545b, { head: true });
-      txt(this, x, top + 78, t('map.soon'), 26, 0x4b545b, { italic: true });
+      txt(this, x, top + 21, t('map.soon'), 24, C.paper, { italic: true });
     }
 
-    const zone = this.add.zone(x, y + ph / 2, pw + 20, R * 2 + ph + 10).setInteractive({ useHandCursor: true });
+    const hitTop = ribbonY - 24;
+    const hitBottom = top + ph;
+    const zone = this.add.zone(x, (hitTop + hitBottom) / 2, pw + 18, hitBottom - hitTop).setInteractive({ useHandCursor: true });
     zone.on('pointerdown', () => {
       sfx.click();
       this.select(n);
@@ -134,7 +139,16 @@ export class MapScene extends Phaser.Scene {
 
   private select(n: number): void {
     this.selected = n;
-    this.rings.forEach((r, i) => r?.setVisible(i === n));
+    this.markers.forEach(({ medal, halo, texture }, i) => {
+      const selected = i === n;
+      const locked = texture === 'map_medal_locked';
+      if (selected) {
+        halo.setDisplaySize(locked ? 195 : 228, locked ? 195 : 228);
+      }
+      halo.setVisible(selected);
+      medal.setTexture(selected && texture === 'map_medal_available' ? 'map_medal_selected' : texture);
+      medal.setDisplaySize(selected && !locked ? 140 : 132, selected && !locked ? 140 : 132);
+    });
     const c = caseByNumber(n);
     this.infoTitle.setText(t('map.case', { n }));
     if (!c) {
