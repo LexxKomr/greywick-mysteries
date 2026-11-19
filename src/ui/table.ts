@@ -38,7 +38,7 @@ export function levelCtx(sceneKey: string, data: LevelData): LevelCtx {
   const caseData = data.caseId ? getCase(data.caseId) : null;
   const level = data.level ?? 1;
   const total = caseData?.clues.length ?? 12;
-  const kinds: Record<string, GameKind> = { Game: 'tripeaks', Pyramid: 'pyramid', Klondike: 'klondike', FreeCell: 'freecell' };
+  const kinds: Record<string, GameKind> = { Game: 'tripeaks', Pyramid: 'pyramid', Klondike: 'klondike', FreeCell: 'freecell', Golf: 'golf', Spider: 'spider' };
   return {
     sceneKey,
     kind: kinds[sceneKey] ?? 'tripeaks',
@@ -151,7 +151,8 @@ function placeBackground(scene: Phaser.Scene, bgKey: string, needTop: number): n
 
 /** Фон стола и узкая верхняя полоска: дело, «Улика N из 12», звёзды. needTop — верх раскладки. */
 export function buildTable(scene: Phaser.Scene, bgKey: string, ctx: LevelCtx, onHome: () => void, needTop: number, needBottom: number): TableUi {
-  const tableTop = placeBackground(scene, bgKey, needTop);
+  const table = ctx.caseData?.tables?.[Math.floor((ctx.level - 1) / 3)] ?? bgKey;
+  const tableTop = placeBackground(scene, table, needTop);
   // раскладка посчитана от кнопок снизу; поднимаем её к дальнему краю стола — так удобнее смотреть
   const dy = Math.min(0, tableTop + 40 - needTop);
   // ближние карты (низ раскладки) — в полный размер, дальние мельче

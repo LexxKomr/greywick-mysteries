@@ -68,7 +68,7 @@ export class KlondikeScene extends Phaser.Scene {
     // раскладка снизу вверх: кнопки, столбики, ряд домов и колоды; всё — на столешнице
     const helpersY = H - 178;
     this.tabBottom = helpersY - 112;
-    const room = Math.max(630, this.tabBottom - (naturalTableTop('table_tearoom') + 10 + CH + 28));
+    const room = Math.max(630, this.tabBottom - (naturalTableTop(ctx.caseData?.tables?.[Math.floor((ctx.level - 1) / 3)] ?? 'table_tearoom') + 10 + CH + 28));
     this.tabY = this.tabBottom - room + CH / 2;
     this.topY = this.tabY - CH - 28;
     this.ui = buildTable(this, 'table_tearoom', ctx, () => !this.finished && exitDialog(this, ctx), this.topY - CH / 2, this.tabBottom);

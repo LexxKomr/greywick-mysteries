@@ -61,7 +61,7 @@ function demo(scene: Phaser.Scene, kind: GameKind, cx: number, cy: number, depth
   const s = CARD_TEX_SCALE * 1.25;
   const card = (key: string, x: number, y: number) => scene.add.image(cx + x, cy + y, key).setScale(s).setDepth(depth);
   const objs: Phaser.GameObjects.GameObject[] = [];
-  if (kind === 'tripeaks') {
+  if (kind === 'tripeaks' || kind === 'golf') {
     const base = card('card_7_0', 90, 0);
     const mover = card('card_6_1', -150, 0).setDepth(depth + 1);
     scene.tweens.add({ targets: mover, x: cx + 90, duration: 700, delay: 500, hold: 900, repeat: -1, repeatDelay: 600, ease: 'Cubic.easeInOut' });
@@ -72,9 +72,9 @@ function demo(scene: Phaser.Scene, kind: GameKind, cx: number, cy: number, depth
     const sum = txt(scene, cx, cy + 125, '8 + 5 = 13', 48, C.wine, { head: true }).setDepth(depth);
     scene.tweens.add({ targets: [a, b], alpha: 0, y: cy - 70, duration: 600, delay: 1100, hold: 500, repeat: -1, repeatDelay: 900 });
     objs.push(a, b, sum);
-  } else if (kind === 'klondike') {
+  } else if (kind === 'klondike' || kind === 'spider') {
     const base = card('card_10_0', 90, -30);
-    const mover = card('card_9_2', -150, 20).setDepth(depth + 1);
+    const mover = card(kind === 'spider' ? 'card_9_0' : 'card_9_2', -150, 20).setDepth(depth + 1);
     scene.tweens.add({ targets: mover, x: cx + 90, y: cy + 30, duration: 700, delay: 500, hold: 900, repeat: -1, repeatDelay: 600, ease: 'Cubic.easeInOut' });
     objs.push(base, mover);
   } else {

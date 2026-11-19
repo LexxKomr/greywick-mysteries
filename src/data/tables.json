@@ -3,5 +3,7 @@
   "table_library": { "top": 0.535, "dim": 0, "edge": 0.45 },
   "table_kitchen": { "top": 0.505, "dim": 0.22, "edge": 0.5 },
   "table_tearoom": { "top": 0.545, "dim": 0.08, "edge": 0.45 },
-  "table_lighthouse": { "top": 0.565, "dim": 0, "edge": 0.45 }
+  "table_lighthouse": { "top": 0.565, "dim": 0, "edge": 0.45 },
+  "table_albion": { "top": 0.485, "dim": 0.1, "edge": 0.45 },
+  "table_station": { "top": 0.445, "dim": 0, "edge": 0.45 }
 }

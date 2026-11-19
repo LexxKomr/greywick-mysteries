@@ -8,7 +8,7 @@ import { dailyKind } from './logic/daily';
 import { dailySeed } from './logic/generator';
 
 /** Какой экран играет какой пасьянс. Пока пасьянс не готов, вместо него идут «Три пика». */
-const SCENES: Record<string, string> = { tripeaks: 'Game', pyramid: 'Pyramid', klondike: 'Klondike', freecell: 'FreeCell' };
+const SCENES: Record<string, string> = { tripeaks: 'Game', pyramid: 'Pyramid', klondike: 'Klondike', freecell: 'FreeCell', golf: 'Golf', spider: 'Spider' };
 
 export function sceneForLevel(c: CaseData, level: number): string {
   return SCENES[c.levels?.[level - 1]?.game ?? 'tripeaks'] ?? 'Game';

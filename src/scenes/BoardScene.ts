@@ -69,7 +69,7 @@ export class BoardScene extends Phaser.Scene {
     title.setShadow(0, 4, '#000000', 10, false, true);
     const sub = txt(this, W / 2, 130, suspect?.name ?? c.title, 36, C.brassLight, { italic: true });
     sub.setShadow(0, 3, '#000000', 8, false, true);
-    if ((c.introFilm || c.opening) && !suspect) {
+    if ((c.introFilm || c.opening || c.comic) && !suspect) {
       makeButton(this, W - 145, 88, 226, 80, t('intro.boardLink'), () => this.scene.start('Intro', {
         caseId: c.id, full: true, board: { from: data.from, accusation: data.accusation },
       }), 'dark', 28);

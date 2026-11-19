@@ -7,7 +7,7 @@ import { AccusationDraft, getCase } from '../services/cases';
 import { t } from '../services/i18n';
 import { save } from '../services/save';
 import { ScrollArea, addBackground, fadeIn, makeButton, panel, roundButton, txt } from '../ui/widgets';
-import { introFilmUrl, playIntroFilm } from '../ui/introFilm';
+import { introFilmUrl, playIntroComic, playIntroFilm } from '../ui/introFilm';
 
 export class IntroScene extends Phaser.Scene {
   constructor() {
@@ -28,6 +28,10 @@ export class IntroScene extends Phaser.Scene {
       save.markIntroSeen(c.id, c.clues.length);
       continueCase(this, c);
     };
+    if (c.comic && !data.filmUnavailable) {
+      playIntroComic(this, c.comic, start, () => this.scene.restart({ ...data, full: true, filmUnavailable: true }));
+      return;
+    }
     const film = c.introFilm && !data.filmUnavailable ? introFilmUrl(c.introFilm) : undefined;
     if (film) {
       playIntroFilm(this, film, start, () => this.scene.restart({ ...data, full: true, filmUnavailable: true }));

@@ -102,6 +102,8 @@
   "game.toBoard": "К доске",
   "game.replayBetter": "Новый лучший результат!",
   "game.replaySame": "Лучший результат сохранён.",
+  "game.spiderRuns": "Собрано рядов: {n} из 8",
+  "game.spiderFill": "Сначала заполните пустые столбцы.",
   "game.hint": "Подсказка",
   "game.plusPass": "+1 проход",
   "game.pass": "Проход {n} из {total}",

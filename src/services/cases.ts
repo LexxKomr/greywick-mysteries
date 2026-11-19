@@ -24,7 +24,7 @@ export interface Suspect {
   portrait: string;
 }
 
-export type GameKind = 'tripeaks' | 'pyramid' | 'klondike' | 'freecell';
+export type GameKind = 'tripeaks' | 'pyramid' | 'klondike' | 'freecell' | 'golf' | 'spider';
 
 export interface LevelSpec {
   game: GameKind;
@@ -40,6 +40,9 @@ export interface CaseData {
   intro: string[];
   opening?: string[];
   introFilm?: string;
+  comic?: { image: string; line: string }[];
+  /** Столы по блокам из трёх улик. */
+  tables?: string[];
   clues: Clue[];
   accuse: string[];
   suspects: Suspect[];
