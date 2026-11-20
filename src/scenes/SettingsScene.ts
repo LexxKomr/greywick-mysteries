@@ -41,9 +41,11 @@ export class SettingsScene extends Phaser.Scene {
     txt(this, W / 2, y - 80, t('settings.lang'), 44, C.inkSoft, { bold: true });
     const language = (x: number, lang: 'ru' | 'en', label: string) => {
       makeButton(this, x, y + 10, 400, 130, t(label), () => {
-        if (save.data.lang === lang) return;
+        const changed = save.data.lang !== lang;
         save.data.lang = lang;
+        save.data.langManual = true;
         save.persist();
+        if (!changed) return;
         syncDocumentLanguage();
         createCardTextures(this);
         this.scene.restart();

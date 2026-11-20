@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "build:yandex": "tsc --noEmit && vite build --mode yandex --outDir dist-yandex",
     "preview": "vite preview",
     "test": "vitest run"
   },

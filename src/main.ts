@@ -13,6 +13,7 @@ import '@fontsource/pt-serif/latin-400-italic.css';
 import { C, H, W, initHeight } from './config';
 import { save } from './services/save';
 import { syncDocumentLanguage } from './services/i18n';
+import { detectLanguage } from './services/platformLanguage';
 import { music } from './services/music';
 import { BootScene } from './scenes/BootScene';
 import { MenuScene } from './scenes/MenuScene';
@@ -43,7 +44,7 @@ async function loadFonts(): Promise<void> {
 }
 
 async function start(): Promise<void> {
-  save.load();
+  save.load(await detectLanguage());
   syncDocumentLanguage();
   music.init();
   initHeight();

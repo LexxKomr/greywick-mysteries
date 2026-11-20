@@ -1,4 +1,5 @@
 import type { GameKind } from './cases';
+import type { Language } from './platformLanguage';
 
 // Сохранения. Вся игра обращается только к этому модулю: позже хранилище
 // браузера (localStorage) заменится облаком Яндекса заменой одного объекта backend.
@@ -17,7 +18,8 @@ export interface SaveData {
   v: 1;
   sound: boolean;
   music: boolean;
-  lang: 'ru' | 'en';
+  lang: Language;
+  langManual?: boolean;
   cases: Record<string, CaseProgress>;
   /** сколько партий выиграно всего (для показа рекламы после каждой второй) */
   wins: number;
@@ -61,14 +63,16 @@ function fresh(): SaveData {
 class Save {
   data: SaveData = fresh();
 
-  load(): void {
-    this.data = fresh();
+  load(language: Language = 'ru'): void {
+    this.data = { ...fresh(), lang: language, langManual: false };
     const raw = backend.read();
     if (!raw) return;
     try {
       const parsed = JSON.parse(raw);
       if (parsed && parsed.v === 1) {
-        this.data = { ...fresh(), ...parsed, music: parsed.music ?? parsed.sound ?? true };
+        const manual = parsed.langManual ?? (parsed.lang === 'en');
+        const lang = manual && (parsed.lang === 'en' || parsed.lang === 'ru') ? parsed.lang : language;
+        this.data = { ...fresh(), ...parsed, lang, langManual: manual, music: parsed.music ?? parsed.sound ?? true };
       }
     } catch {
       /* испорченное сохранение — начинаем заново */
@@ -150,8 +154,8 @@ class Save {
   }
 
   reset(): void {
-    const { sound, music, lang } = this.data;
-    this.data = { ...fresh(), sound, music, lang };
+    const { sound, music, lang, langManual } = this.data;
+    this.data = { ...fresh(), sound, music, lang, langManual };
     this.persist();
   }
 }

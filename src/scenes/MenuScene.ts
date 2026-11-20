@@ -7,6 +7,7 @@ import { dailySeed } from '../logic/generator';
 import { t } from '../services/i18n';
 import { currentCase } from '../services/cases';
 import { save } from '../services/save';
+import { signalPlatformReady } from '../services/platformLanguage';
 import { fadeIn, makeButton, txt } from '../ui/widgets';
 import { confirmProgressReset } from '../ui/progress';
 
@@ -46,5 +47,6 @@ export class MenuScene extends Phaser.Scene {
 
     const version = txt(this, W - 26, H - 15, 'v' + VERSION, 27, C.paperLight, { ox: 1, oy: 1 });
     version.setShadow(0, 2, '#10191e', 6, false, true).setAlpha(0.8);
+    signalPlatformReady();
   }
 }
